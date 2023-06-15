@@ -20,6 +20,7 @@ const response = async(
   // handling callbacks
   const callbackManager = CallbackManager.fromHandlers({
     async handleLLMStart(llm, _prompts: string[]) {
+      // console.log(_prompts);
       startCB();
     },
     async handleLLMEnd(output) {
