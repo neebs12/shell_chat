@@ -28,5 +28,3 @@ export const getTokenLength = async (
     const encoder = await getEncoder(modelName);
     return encoder.encode(text).length;
 }
-
-// getTokenLength("hello world").then(console.log)

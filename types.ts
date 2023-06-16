@@ -4,3 +4,8 @@ export type Message = {
 };
 
 export type Messages = Message[];
+
+export type filePathsAndContent = {
+  filePath: string;
+  content: string;
+};

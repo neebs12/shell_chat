@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import { Command } from 'commander';
-import { replSimulation } from './repl-simulation';
+import { replSimulation } from './repl/repl-simulation';
 
 const program = new Command();
 

@@ -9,7 +9,7 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 import { PromptTemplate } from "langchain/prompts";
 import { LLMChain } from "langchain/chains";
 
-import { Messages } from "./types";
+import { Messages } from "../types";
 
 const response = async(
   input: Messages,
