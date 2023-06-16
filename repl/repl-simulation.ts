@@ -1,9 +1,9 @@
-import fs from "fs";
 import * as readline from "readline";
-
 import { processLine } from "./process-line";
-import { Message, Messages } from "../types";
-import { response } from "../agent/agent";
+
+import { REPLSystemPrompt } from "../utils/system-prompt-components";
+import { filesToObject } from "../utils/file-to-object";
+import { Messages } from "../types";
 
 const replSimulation = (filePaths: string[]): void => {
   const rl = readline.createInterface({
@@ -22,8 +22,12 @@ const replSimulation = (filePaths: string[]): void => {
         rl.prompt();
         return;
       }
-
-      await processLine(conversation, input, filePaths);
+      // console.log(conversation);
+      const filesObject = filesToObject(filePaths);
+      const systemPrompt = new REPLSystemPrompt({
+        filePathsAndContent: filesObject,
+      });
+      await processLine(conversation, input, filesObject);
 
       rl.prompt();
     } catch (error) {

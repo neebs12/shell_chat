@@ -5,7 +5,8 @@ export type Message = {
 
 export type Messages = Message[];
 
-export type filePathsAndContent = {
-  filePath: string;
+export type FilePathAndContent = {
+  absolutePath: string;
+  fileName: string;
   content: string;
 };

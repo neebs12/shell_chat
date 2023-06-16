@@ -1,13 +1,15 @@
-import { Messages } from "../types";
+import { Messages, FilePathAndContent } from "../types";
 import { response } from "../agent/agent";
 
 export const processLine = async (
   conversation: Messages,
   input: string,
-  pathsAndContent: string[]
+  pathsAndContent: FilePathAndContent[]
 ) => {
   // append user input to the conversation
-  conversation = [...conversation, { key: "user", content: input }];
+  conversation.push({ key: "user", content: input });
+
+  const startCB = () => {};
 
   let totalAIResponse = "";
   const streamCB = (token: string) => {
@@ -17,10 +19,15 @@ export const processLine = async (
 
   const endCB = () => {
     // append to the overall conversation (is stored in the memory due to ephemeral feature)
-    conversation = [...conversation, { key: "ai", content: totalAIResponse }];
+    conversation.push({ key: "ai", content: totalAIResponse });
     // to not overwrite the response
     process.stdout.write("\n");
   };
 
-  await response(conversation, () => {}, streamCB, endCB);
+  await response({
+    input: conversation,
+    startCB,
+    streamCB,
+    endCB,
+  });
 };
