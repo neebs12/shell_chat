@@ -4,6 +4,8 @@ import {
   SystemMessagePromptTemplate,
   AIMessagePromptTemplate,
 } from "langchain/prompts";
+
+import { SystemChatMessage } from "langchain/dist/schema";
 import { ConsoleCallbackHandler, CallbackManager } from "langchain/callbacks";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { PromptTemplate } from "langchain/prompts";
@@ -12,11 +14,13 @@ import { LLMChain } from "langchain/chains";
 import { Messages, FilePathAndContent } from "../types";
 
 const response = async ({
+  systemPromptString,
   input,
   startCB,
   streamCB,
   endCB,
 }: {
+  systemPromptString: string;
   input: Messages;
   startCB: () => void;
   streamCB: (token: string) => void;
@@ -35,9 +39,8 @@ const response = async ({
     },
   });
 
-  const systemPrompt = SystemMessagePromptTemplate.fromTemplate(
-    "You are a super sassy human. You are talking to an AI. And you are super sassy to this AI that you are talking to."
-  );
+  const systemPrompt =
+    SystemMessagePromptTemplate.fromTemplate(`{systemPromptString}`);
   // construct current chat
   const currentChatPromptArray = input.map((message) => {
     if (message.key === "ai") {
@@ -69,7 +72,7 @@ const response = async ({
     callbackManager,
   });
 
-  const response = await llm.call({});
+  const response = await llm.call({ systemPromptString });
 };
 
 export { response };

@@ -48,7 +48,7 @@ export class REPLSystemPrompt {
       this.formatFilePathsAndContent(filePathsAndContent);
   }
   // public methods
-  public getSystemPrompt(): string {
+  public getSystemPromptString(): string {
     const fullSystemPrompt = `${this.prefixInstruction}
 
 ${this.formattedInjection}
@@ -59,11 +59,11 @@ Description of files: ${this.suffixInstruction}`;
   }
 
   public printSystemPrompt(): void {
-    console.log(this.getSystemPrompt());
+    console.log(this.getSystemPromptString());
   }
 
   public async getSystemPromptTokenLength(): Promise<number> {
-    return await getTokenLengthByInput(this.getSystemPrompt());
+    return await getTokenLengthByInput(this.getSystemPromptString());
   }
 
   public async getTokenlengthByPromptComponents(): Promise<object> {
@@ -136,6 +136,6 @@ ${content}
       strArry.push(filePathContentUnit);
     }
 
-    return strArry.join("\n");
+    return strArry.join("\n\n");
   }
 }

@@ -24,10 +24,11 @@ const replSimulation = (filePaths: string[]): void => {
       }
       // console.log(conversation);
       const filesObject = filesToObject(filePaths);
-      const systemPrompt = new REPLSystemPrompt({
-        filePathsAndContent: filesObject,
+      await processLine({
+        filesObject,
+        conversation,
+        input,
       });
-      await processLine(conversation, input, filesObject);
 
       rl.prompt();
     } catch (error) {

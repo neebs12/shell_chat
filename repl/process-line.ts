@@ -1,11 +1,17 @@
 import { Messages, FilePathAndContent } from "../types";
 import { response } from "../agent/agent";
 
-export const processLine = async (
-  conversation: Messages,
-  input: string,
-  pathsAndContent: FilePathAndContent[]
-) => {
+import { REPLSystemPrompt } from "../utils/system-prompt-components";
+
+export const processLine = async ({
+  filesObject,
+  conversation,
+  input,
+}: {
+  filesObject: FilePathAndContent[];
+  conversation: Messages;
+  input: string;
+}) => {
   // append user input to the conversation
   conversation.push({ key: "user", content: input });
 
@@ -24,7 +30,16 @@ export const processLine = async (
     process.stdout.write("\n");
   };
 
+  const replSystemPrompt = new REPLSystemPrompt({
+    filePathsAndContent: filesObject,
+  });
+  // console.log({
+  //   systemPrompt: systemPrompt.getSystemPrompt(),
+  //   systemPromptLength: await systemPrompt.getSystemPromptTokenLength(),
+  // });
+
   await response({
+    systemPromptString: replSystemPrompt.getSystemPromptString(),
     input: conversation,
     startCB,
     streamCB,
