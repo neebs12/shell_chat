@@ -1,23 +1,24 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 dotenv.config();
 
-import { Command } from 'commander';
-import { replSimulation } from './repl/repl-simulation';
+import { Command } from "commander";
+import { ApplicationController } from "./src/controllers/ApplicationController";
 
 const program = new Command();
 
 // Define your command with options
 program
-  .option('--files <files...>', 'Input files to process')
+  .option("--files <files...>", "Input files to process")
   .action((): void => {
     const options = program.opts();
-    let filePaths: string[] = []
+    let filePaths: string[] = [];
     // determines if exists
     if (options.files) {
-      filePaths = [...options.files]
-      console.log(filePaths)
+      filePaths = [...options.files];
     }
-    replSimulation(filePaths)
+    // replSimulation(filePaths);
+    const app = new ApplicationController(filePaths);
+    app.run();
   });
 
 program.parse(process.argv);
