@@ -56,15 +56,12 @@ const response = async ({
   ]);
 
   const chat = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo-16k",
     temperature: 0.5,
     maxTokens: 250,
     streaming: true,
     callbackManager,
   });
-
-  // const prompt = JSON.parse(await chatPrompt.format({}));
-  // const systemFormattedSystemPrompt
-  // console.log({ chatPrompt: await chatPrompt.format({}) });
 
   const llm = new LLMChain({
     llm: chat,

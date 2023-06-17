@@ -22,6 +22,8 @@ const replSimulation = (filePaths: string[]): void => {
         rl.prompt();
         return;
       }
+
+      // pre-process the input, scan for certain commands for control flow
       // console.log(conversation);
       const filesObject = filesToObject(filePaths);
       await processLine({

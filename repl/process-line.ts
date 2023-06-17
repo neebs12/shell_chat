@@ -38,8 +38,10 @@ export const processLine = async ({
   //   systemPromptLength: await systemPrompt.getSystemPromptTokenLength(),
   // });
 
+  const systemPromptString = replSystemPrompt.getSystemPromptString();
+  console.log(systemPromptString);
   await response({
-    systemPromptString: replSystemPrompt.getSystemPromptString(),
+    systemPromptString,
     input: conversation,
     startCB,
     streamCB,
