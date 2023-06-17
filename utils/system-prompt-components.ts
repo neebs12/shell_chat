@@ -49,6 +49,7 @@ export class REPLSystemPrompt {
   }
   // public methods
   public getSystemPromptString(): string {
+    // for any harcoded prompts, put them here
     const fullSystemPrompt = `${this.prefixInstruction}
 
 ${this.formattedInjection}
@@ -66,7 +67,12 @@ Description of files: ${this.suffixInstruction}`;
     return await getTokenLengthByInput(this.getSystemPromptString());
   }
 
-  public async getTokenlengthByPromptComponents(): Promise<object> {
+  public async getTokenlengthByPromptComponents(): Promise<{
+    prefixInstructionTokenLength: number;
+    suffixInstructionTokenLength: number;
+    filePathsTokenLength: { fileName: string; tokenLength: number }[];
+    sumTokenLength: number;
+  }> {
     // this function returns the token length of each component of the prompt
     // this component includes:
     // - instruction
@@ -87,7 +93,7 @@ Description of files: ${this.suffixInstruction}`;
       this.filePathsAndContent.map(async (filePathAndContent) => {
         const { content } = filePathAndContent;
         const tokenLength = await getTokenLengthByInput(content);
-        return { ...filePathAndContent, tokenLength };
+        return { fileName: filePathAndContent.fileName, tokenLength };
       })
     );
 
@@ -106,6 +112,40 @@ Description of files: ${this.suffixInstruction}`;
       filePathsTokenLength,
       sumTokenLength,
     };
+  }
+
+  public async printTokenLengthReport(): Promise<void> {
+    // this function prints the token length report
+    // this component includes:
+    // - instruction
+    // - each of the file paths
+    // - suffix description
+    // - and TOTAL token length of the prompt (get the token length of the prompt itself)
+
+    const {
+      prefixInstructionTokenLength,
+      suffixInstructionTokenLength,
+      filePathsTokenLength,
+      sumTokenLength,
+    } = await this.getTokenlengthByPromptComponents();
+
+    // I want to pair the file name with the token length
+    const filePathsTokenLengthObject = filePathsTokenLength.reduce(
+      (acc, filePathTokenLength) => {
+        const { fileName, tokenLength } = filePathTokenLength;
+        acc[fileName] = tokenLength;
+        return acc;
+      },
+      {} as { [key: string]: number }
+    );
+
+    console.log(`Token Length Report:
+=============================
+prefixInstructionTokenLength: ${prefixInstructionTokenLength}
+suffixInstructionTokenLength: ${suffixInstructionTokenLength}
+filePathsTokenLength: ${JSON.stringify(filePathsTokenLengthObject, null, 2)}
+sumTokenLength: ${sumTokenLength}
+=============================`);
   }
 
   // private methods

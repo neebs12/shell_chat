@@ -56,9 +56,9 @@ const response = async ({
   ]);
 
   const chat = new ChatOpenAI({
-    modelName: "gpt-3.5-turbo-16k",
+    modelName: process.env.MODEL_NAME ?? "gpt-3.5-turbo-16k",
     temperature: 0.5,
-    maxTokens: 250,
+    maxTokens: Number(process.env.MAX_RESPONSE_TOKENS) ?? 100,
     streaming: true,
     callbackManager,
   });

@@ -2,18 +2,18 @@ import { Messages, FilePathAndContent } from "../types";
 import { response } from "../agent/agent";
 
 import { REPLSystemPrompt } from "../utils/system-prompt-components";
+import { ConversationCache } from "../utils/conversation-cache";
 
 export const processLine = async ({
-  filesObject,
-  conversation,
+  replSystemPrompt,
+  conversationCache,
   input,
 }: {
-  filesObject: FilePathAndContent[];
-  conversation: Messages;
+  replSystemPrompt: REPLSystemPrompt;
+  conversationCache: ConversationCache;
   input: string;
 }) => {
-  // append user input to the conversation
-  conversation.push({ key: "user", content: input });
+  conversationCache.appendUserMessage(input);
 
   const startCB = () => {};
 
@@ -25,24 +25,15 @@ export const processLine = async ({
 
   const endCB = () => {
     // append to the overall conversation (is stored in the memory due to ephemeral feature)
-    conversation.push({ key: "ai", content: totalAIResponse });
+    conversationCache.appendAIMessage(totalAIResponse);
     // to not overwrite the response
     process.stdout.write("\n");
   };
 
-  const replSystemPrompt = new REPLSystemPrompt({
-    filePathsAndContent: filesObject,
-  });
-  // console.log({
-  //   systemPrompt: systemPrompt.getSystemPrompt(),
-  //   systemPromptLength: await systemPrompt.getSystemPromptTokenLength(),
-  // });
-
   const systemPromptString = replSystemPrompt.getSystemPromptString();
-  console.log(systemPromptString);
   await response({
     systemPromptString,
-    input: conversation,
+    input: conversationCache.getConversationHistory(),
     startCB,
     streamCB,
     endCB,
