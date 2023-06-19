@@ -23,12 +23,12 @@ export class SystemPromptModel {
   private prefixInstruction: string = PREFIX_INSTRUCTION;
   private suffixInstruction: string = SUFFIX_INSTRUCTION;
 
-  constructor(private _filePaths: string[]) {
+  constructor(private _filePaths: string[] = []) {
     this._filePaths = _filePaths;
   }
 
   public get filePaths(): string[] {
-    return this._filePaths;
+    return [...this._filePaths];
   }
 
   public addFilePath(filePath: string) {

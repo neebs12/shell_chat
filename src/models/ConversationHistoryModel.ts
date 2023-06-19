@@ -12,7 +12,7 @@ export class ConversationHistoryModel {
   }
 
   public getConversationHistory(): Messages {
-    return this.conversationHistory;
+    return [...this.conversationHistory];
   }
 
   public resetConversationHistory(): void {
