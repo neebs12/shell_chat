@@ -19,6 +19,7 @@ export class CommandController {
     "/verbose",
     "/debug",
     "/reset",
+    "/cwd",
   ];
 
   private systemPromptController: SystemPromptController;
@@ -58,6 +59,9 @@ export class CommandController {
       await this.handleListFilePaths();
     } else if (cmd === "/find") {
       await this.handleFindByPaths(cmdArry);
+    } else if (cmd === "/cwd") {
+      // NOTE: This is for debugging purposes only
+      await this.commandView.render(process.cwd());
     } else {
       this.commandView.render(`${cmdArry[0]} has not yet been implemented`);
     }
@@ -84,9 +88,9 @@ export class CommandController {
     statuses.forEach((status, index) => {
       const currPath = paths[index];
       if (status) {
-        this.commandView.render(`  ✅ ${currPath}`);
+        this.commandView.renderIgnoringCwd(`  ✅ ${currPath}`);
       } else {
-        this.commandView.render(`  ❌ ${currPath}`);
+        this.commandView.renderIgnoringCwd(`  ❌ ${currPath}`);
       }
     });
   }
@@ -101,8 +105,10 @@ export class CommandController {
     }
 
     const uniqueFilePaths = await this.handleFindByPaths(["", ...fileNames]);
-    this.commandView.render("--------------------------");
-    await this.handleAdd(["", ...uniqueFilePaths]);
+    if (uniqueFilePaths.length !== 0) {
+      this.commandView.render("--------------------------");
+      await this.handleAdd(["", ...uniqueFilePaths]);
+    }
   }
 
   private async handleRemove(cmdArry: string[]): Promise<void> {
@@ -121,9 +127,9 @@ export class CommandController {
     statuses.forEach((status, index) => {
       const currPath = paths[index];
       if (status) {
-        this.commandView.render(`  ✅ ${currPath}`);
+        this.commandView.renderIgnoringCwd(`  ✅ ${currPath}`);
       } else {
-        this.commandView.render(`  ❌ ${currPath}`);
+        this.commandView.renderIgnoringCwd(`  ❌ ${currPath}`);
       }
     });
   }
@@ -138,7 +144,7 @@ export class CommandController {
     this.commandView.render(`The following files are being tracked 🕵️`);
     if (filePaths.length > 0) {
       filePaths.forEach((filePath) => {
-        this.commandView.render(`  🔎 ${filePath}`);
+        this.commandView.renderIgnoringCwd(`  🔎 ${filePath}`);
       });
     } else {
       this.commandView.render(`  ❌ No files are being tracked`);
@@ -183,7 +189,7 @@ export class CommandController {
           `  🔎 ${fileName} - files: (${filePaths.length})`
         );
         filePaths.forEach((filePath) =>
-          this.commandView.render(`      ${filePath}`)
+          this.commandView.renderIgnoringCwd(`      ${filePath}`)
         );
       }
     });
