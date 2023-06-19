@@ -15,6 +15,7 @@ export class CommandController {
     "/remove",
     "/remove-all",
     "/list",
+    "/find",
     "/verbose",
     "/debug",
     "/reset",
@@ -54,7 +55,9 @@ export class CommandController {
     } else if (cmd === "/remove-all") {
       await this.handleRemoveAll();
     } else if (cmd === "/list") {
-      await this.getAllFilePaths();
+      await this.handleListFilePaths();
+    } else if (cmd === "/find") {
+      await this.handleFindByPaths(cmdArry);
     } else {
       this.commandView.render(`${cmdArry[0]} has not yet been implemented`);
     }
@@ -96,37 +99,9 @@ export class CommandController {
       );
       return;
     }
-    // TODO: ignore dirs and max depth can be changed by the user later
-    const IGNORE_DIRS = ["node_modules", ".git", ".vscode", "dist", "build"];
-    const MAX_DEPTH = 4;
 
-    const searchPromises = fileNames.map((fileName) =>
-      findFilesWithName(fileName, IGNORE_DIRS, MAX_DEPTH)
-    );
-
-    const searchResults = await Promise.all(searchPromises);
-    this.commandView.render(
-      "The following files have been found for the given file names:"
-    );
-
-    fileNames.forEach((fileName, index) => {
-      const filePaths = searchResults[index];
-      if (filePaths.length === 0) {
-        this.commandView.render(`  ❌ ${fileName} - None Found`);
-      } else {
-        this.commandView.render(
-          `  ✅ ${fileName} - files: (${filePaths.length})`
-        );
-        filePaths.forEach((filePath) =>
-          this.commandView.render(`    📁 ${filePath}`)
-        );
-      }
-    });
-
-    // flat & unique
-    const flattenedSearchResults = searchResults.flat();
-    const uniqueFilePaths = Array.from(new Set(flattenedSearchResults));
-    // add the unique file paths, "" is a placeholder for the command to use this fn
+    const uniqueFilePaths = await this.handleFindByPaths(["", ...fileNames]);
+    this.commandView.render("--------------------------");
     await this.handleAdd(["", ...uniqueFilePaths]);
   }
 
@@ -158,7 +133,7 @@ export class CommandController {
     this.commandView.render(`All files have been removed 🗑️`);
   }
 
-  private async getAllFilePaths(): Promise<void> {
+  private async handleListFilePaths(): Promise<void> {
     const filePaths = await this.systemPromptController.getFilePaths();
     this.commandView.render(`The following files are being tracked 🕵️`);
     if (filePaths.length > 0) {
@@ -168,5 +143,54 @@ export class CommandController {
     } else {
       this.commandView.render(`  ❌ No files are being tracked`);
     }
+  }
+
+  private async handleFindByPaths(cmdArry: string[]): Promise<string[]> {
+    const fileNames = cmdArry.slice(1);
+    if (cmdArry.length < 2) {
+      this.commandView.render(
+        "Invalid `/find` command. Usage: /find file1 partial/path/file2"
+      );
+      return [];
+    }
+    // TODO: ignore dirs and max depth can be changed by the user later
+    const IGNORE_DIRS = ["node_modules", ".git", ".vscode", "dist", "build"];
+    const MAX_DEPTH = 4;
+
+    const searchPromises = fileNames.map((fileName) =>
+      findFilesWithName(fileName, IGNORE_DIRS, MAX_DEPTH)
+    );
+
+    const searchResults = await Promise.all(searchPromises);
+    // Create array of objects {fileName, filePaths}
+    const filesAndPaths = fileNames.map((fileName, index) => ({
+      fileName,
+      filePaths: searchResults[index],
+    }));
+
+    // Sort array by number of found paths in ascending order
+    const sortedFilesAndPaths = filesAndPaths.sort(
+      (a, b) => b.filePaths.length - a.filePaths.length
+    );
+
+    this.commandView.render("For your paths and files, we have found:");
+
+    sortedFilesAndPaths.forEach(({ fileName, filePaths }) => {
+      if (filePaths.length === 0) {
+        this.commandView.render(`  ❌ ${fileName} - files: (0)`);
+      } else {
+        this.commandView.render(
+          `  🔎 ${fileName} - files: (${filePaths.length})`
+        );
+        filePaths.forEach((filePath) =>
+          this.commandView.render(`      ${filePath}`)
+        );
+      }
+    });
+
+    // flat & unique
+    const flattenedSearchResults = searchResults.flat();
+    const uniqueFilePaths = Array.from(new Set(flattenedSearchResults));
+    return uniqueFilePaths;
   }
 }
