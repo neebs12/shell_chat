@@ -31,6 +31,10 @@ export class SystemPromptModel {
     return [...this._filePaths];
   }
 
+  public resetFilePaths(): void {
+    this._filePaths = [];
+  }
+
   public addFilePath(filePath: string) {
     this._filePaths.push(filePath);
   }

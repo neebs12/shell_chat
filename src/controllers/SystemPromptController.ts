@@ -81,6 +81,14 @@ export class SystemPromptController {
     return removedStatuses;
   }
 
+  public async removeAllFilePaths(): Promise<void> {
+    await this.systemPromptModel.resetFilePaths();
+  }
+
+  public async getFilePaths(): Promise<string[]> {
+    return this.systemPromptModel.filePaths;
+  }
+
   public static async isThisAFile(filePath: string): Promise<boolean> {
     try {
       const fileStats = await fs.promises.stat(filePath);
