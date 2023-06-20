@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-import { FilePathAndContent } from "../../types";
+import { FilePathAndContent } from "../types";
 
 const PREFIX_INSTRUCTION = `You are a expert coding AI. You will answer queries provided to you in a short and concise manner. You will receive a list of files and their contents and their paths. Your task is to give clear and concise answers to any queries provided by the human given the files you are provided with. The files will given to you in the following format:
 

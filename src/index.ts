@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { Command } from "commander";
-import { ApplicationController } from "./src/controllers/ApplicationController";
+import { ApplicationController } from "./controllers/ApplicationController";
 
 const program = new Command();
 

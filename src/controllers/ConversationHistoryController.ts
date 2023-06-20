@@ -1,5 +1,5 @@
 import { ConversationHistoryModel } from "../models/ConversationHistoryModel";
-import { Messages } from "../../types";
+import { Messages } from "../types";
 export class ConversationHistoryController {
   private conversationModel: ConversationHistoryModel =
     new ConversationHistoryModel();

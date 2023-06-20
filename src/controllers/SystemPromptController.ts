@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 
 import { SystemPromptModel } from "../models/SystemPromptModel";
-import { FilePathAndContent } from "../../types";
+import { FilePathAndContent } from "../types";
 
 type SystemPromptComponents = {
   prefix: string;

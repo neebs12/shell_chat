@@ -1,4 +1,4 @@
-import { Messages } from "../../types";
+import { Messages } from "../types";
 
 export class ConversationHistoryModel {
   private conversationHistory: Messages = [];
