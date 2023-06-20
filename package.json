@@ -2,10 +2,16 @@
   "name": "shell_chat",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./build/index.js",
+  "bin": {
+    "sc": "./build/index.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node ./src/index.ts"
+    "dev": "ts-node ./src/index.ts",
+    "build": "tsc && npm run postbuild && npm link",
+    "start": "node ./build/index.js",
+    "postbuild": "node ./build/write-shebang.js"
   },
   "author": "",
   "license": "ISC",
