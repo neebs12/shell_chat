@@ -1,5 +1,6 @@
+import path from "path";
 import * as dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ path: "/Users/jasonaricheta/ai-stuff/shell_chat/.env" });
 
 import { Command } from "commander";
 import { ApplicationController } from "./controllers/ApplicationController";
