@@ -1,3 +1,5 @@
+import path from "path";
+
 import { SystemPromptController } from "./SystemPromptController";
 import { ConversationHistoryController } from "./ConversationHistoryController";
 import { CommandView } from "../views/CommandView";
@@ -82,51 +84,65 @@ export class CommandController {
     }
   }
 
-  private async handleResetConversation(): Promise<void> {
+  private async handleResetConversation(render: boolean = true): Promise<void> {
     await this.conversationHistoryController.resetConversationHistory();
-    this.commandView.render("Conversation has been reset 💬");
+    render && this.commandView.render("Conversation has been reset 💬");
   }
 
-  private async handlePathAdd(cmdArry: string[]): Promise<void> {
+  private async handlePathAdd(
+    cmdArry: string[],
+    render: boolean = true
+  ): Promise<void> {
     const paths = cmdArry.slice(1);
     if (cmdArry.length < 2) {
-      this.commandView.render(
-        "Invalid usage command. Usage: /<cmd> <path/to/file> <path/to/file2>"
-      );
+      this.commandView.renderInvalidCommand([
+        "<path/to/file>",
+        "<path/to/file2>",
+      ]);
       return;
     }
 
     const statuses = await this.systemPromptController.addFilePaths(paths);
-    this.commandView.render(
-      `The following files have been added(✅) or not added(❌):`
-    );
-    statuses.forEach((status, index) => {
-      const currPath = paths[index];
-      if (status) {
-        this.commandView.renderIgnoringCwd(`  ✅ ${currPath}`);
-      } else {
-        this.commandView.renderIgnoringCwd(`  ❌ ${currPath}`);
-      }
-    });
+    render && this.commandView.renderPathAdd(paths, statuses);
   }
 
-  private async handleFileAdd(cmdArry: string[]): Promise<void> {
+  private async handleFileAdd(
+    cmdArry: string[],
+    render: boolean = true
+  ): Promise<void> {
     const fileNames = cmdArry.slice(1);
     if (cmdArry.length < 2) {
-      this.commandView.render(
-        "Invalid `/<cmd>` command. Usage: /<cmd> <file> <partial/path/file2>"
-      );
+      this.commandView.renderInvalidCommand(["<file>", "<partial/path/file2>"]);
       return;
     }
 
-    const uniqueFilePaths = await this.handleFindByPaths(["", ...fileNames]);
+    const uniqueFilePaths = await this.handleFindByPaths(
+      ["", ...fileNames],
+      false
+    );
+    const existingFilePaths = await this.systemPromptController.getFilePaths();
     if (uniqueFilePaths.length !== 0) {
-      this.commandView.render("--------------------------");
-      await this.handlePathAdd(["", ...uniqueFilePaths]);
+      await this.handlePathAdd(["", ...uniqueFilePaths], false);
     }
+
+    // now I want to match the fileNames to the uniqueFilePaths
+    // by using the path.basename() function, I want to assign this to `searchResults`, where the type is: { fileName: string; filePaths: string[] }[]
+    const searchResults = fileNames.map((fileName) => {
+      const filePaths = uniqueFilePaths.filter((filePath) => {
+        // we don't want to add a file that already exists
+        if (!existingFilePaths.includes(filePath)) {
+          return path.basename(filePath) === fileName;
+        }
+      });
+      return { fileName, filePaths };
+    });
+    render && this.commandView.renderFileAdd(searchResults);
   }
 
-  private async handleRemoveFile(cmdArry: string[]): Promise<void> {
+  private async handleRemoveFile(
+    cmdArry: string[],
+    render: boolean = true
+  ): Promise<void> {
     const paths = cmdArry.slice(1);
     if (cmdArry.length < 2) {
       this.commandView.render(
@@ -136,86 +152,52 @@ export class CommandController {
     }
 
     const statuses = await this.systemPromptController.removeFilePaths(paths);
-    this.commandView.render(
-      `The following files have been removed(✅) or not removed(❌):`
-    );
-    statuses.forEach((status, index) => {
-      const currPath = paths[index];
-      if (status) {
-        this.commandView.renderIgnoringCwd(`  ✅ ${currPath}`);
-      } else {
-        this.commandView.renderIgnoringCwd(`  ❌ ${currPath}`);
-      }
-    });
+    render && this.commandView.renderRemoveFile(paths, statuses);
   }
 
-  private async handleRemoveFileAll(): Promise<void> {
+  private async handleRemoveFileAll(render: boolean = true): Promise<void> {
     await this.systemPromptController.removeAllFilePaths();
-    this.commandView.render(`All files have been removed 🗑️`);
+    render && this.commandView.render(`All files have been removed 🗑️`);
   }
 
-  private async handleResetAll(): Promise<void> {
-    await this.handleResetConversation();
-    await this.handleRemoveFileAll();
+  private async handleResetAll(render: boolean = true): Promise<void> {
+    await this.handleResetConversation(render);
+    await this.handleRemoveFileAll(render);
   }
 
-  private async handleListFilePaths(): Promise<void> {
+  private async handleListFilePaths(render: boolean = true): Promise<void> {
     const filePaths = await this.systemPromptController.getFilePaths();
-    this.commandView.render(`The following files are being tracked 🕵️`);
-    if (filePaths.length > 0) {
-      filePaths.forEach((filePath) => {
-        this.commandView.renderIgnoringCwd(`  🔎 ${filePath}`);
-      });
-    } else {
-      this.commandView.render(`  ❌ No files are being tracked`);
-    }
+    render && this.commandView.renderListFilePaths(filePaths);
   }
 
-  private async handleFindByPaths(cmdArry: string[]): Promise<string[]> {
+  private async handleFindByPaths(
+    cmdArry: string[],
+    render: boolean = true
+  ): Promise<string[]> {
     const fileNames = cmdArry.slice(1);
     if (cmdArry.length < 2) {
-      this.commandView.render(
-        "Invalid `/<cmd>` command. Usage: /<cmd> <file> <partial/path/file2>"
-      );
+      this.commandView.renderInvalidCommand(["<file>", "<partial/path/file2>"]);
       return [];
     }
     // TODO: ignore dirs and max depth can be changed by the user later
     const IGNORE_DIRS = ["node_modules", ".git", ".vscode", "dist", "build"];
     const MAX_DEPTH = 4;
 
-    const searchPromises = fileNames.map((fileName) =>
-      findFilesWithName(fileName, IGNORE_DIRS, MAX_DEPTH)
-    );
-
-    const searchResults = await Promise.all(searchPromises);
-    // Create array of objects {fileName, filePaths}
-    const filesAndPaths = fileNames.map((fileName, index) => ({
-      fileName,
-      filePaths: searchResults[index],
-    }));
-
-    // Sort array by number of found paths in ascending order
-    const sortedFilesAndPaths = filesAndPaths.sort(
-      (a, b) => b.filePaths.length - a.filePaths.length
-    );
-
-    this.commandView.render("For your paths and files, we have found:");
-
-    sortedFilesAndPaths.forEach(({ fileName, filePaths }) => {
-      if (filePaths.length === 0) {
-        this.commandView.render(`  ❌ ${fileName} - files: (0)`);
-      } else {
-        this.commandView.render(
-          `  🔎 ${fileName} - files: (${filePaths.length})`
-        );
-        filePaths.forEach((filePath) =>
-          this.commandView.renderIgnoringCwd(`      ${filePath}`)
-        );
-      }
+    const searchPromises = fileNames.map(async (fileName) => {
+      return {
+        fileName,
+        filePaths: await findFilesWithName(fileName, IGNORE_DIRS, MAX_DEPTH),
+      };
     });
 
+    const searchResults = await Promise.all(searchPromises);
+
+    render && this.commandView.renderFindByPaths(searchResults);
+
     // flat & unique
-    const flattenedSearchResults = searchResults.flat();
+    const flattenedSearchResults = searchResults
+      .map(({ filePaths }) => filePaths)
+      .flat();
     const uniqueFilePaths = Array.from(new Set(flattenedSearchResults));
     return uniqueFilePaths;
   }
