@@ -1,5 +1,6 @@
 import path from "path";
 
+import { TokenController } from "./TokenController";
 import { SystemPromptController } from "./SystemPromptController";
 import { ConversationHistoryController } from "./ConversationHistoryController";
 import { CommandView } from "../views/CommandView";
@@ -31,12 +32,17 @@ export class CommandController {
     "/ra",
     "/save",
     "/s",
+    "/token-report", // all token breakdown
+    "/tr",
+    "/token-files", // token remaining + file breakdown only
+    "/tf",
     "/verbose",
     "/debug",
     "/cwd",
     "/pwd",
   ];
 
+  private tokenController: TokenController;
   private systemPromptController: SystemPromptController;
   private conversationHistoryController: ConversationHistoryController;
   private commandView: CommandView = new CommandView();
@@ -47,6 +53,10 @@ export class CommandController {
   }: CommandControllerDependencies) {
     this.systemPromptController = systemPromptController;
     this.conversationHistoryController = conversationHistoryController;
+    this.tokenController = new TokenController({
+      systemPromptController,
+      conversationHistoryController,
+    });
   }
 
   public isCommandAvailable(command: string): boolean {
@@ -76,6 +86,10 @@ export class CommandController {
       await this.handleResetConversation();
     } else if (cmd === "/reset-all" || cmd === "/ra") {
       await this.handleResetAll();
+    } else if (cmd === "/token-report" || cmd === "/tr") {
+      await this.handleTokenReport();
+    } else if (cmd === "/token-files" || cmd === "/tf") {
+      await this.handleTokenFiles();
     } else if (cmd === "/cwd" || cmd === "/pwd") {
       // NOTE: This is for debugging purposes only
       await this.commandView.render(process.cwd());
@@ -200,5 +214,15 @@ export class CommandController {
       .flat();
     const uniqueFilePaths = Array.from(new Set(flattenedSearchResults));
     return uniqueFilePaths;
+  }
+
+  private async handleTokenReport(render: boolean = true): Promise<void> {
+    const tokenReport = await this.tokenController.getTokenReport();
+    render && this.commandView.render(tokenReport);
+  }
+
+  private async handleTokenFiles(render: boolean = true): Promise<void> {
+    const tokenFiles = await this.tokenController.getTokenFiles();
+    render && this.commandView.render(tokenFiles);
   }
 }

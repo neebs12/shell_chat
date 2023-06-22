@@ -4,11 +4,12 @@ import path from "path";
 import { SystemPromptModel } from "../models/SystemPromptModel";
 import { FilePathAndContent } from "../types";
 
-type SystemPromptComponents = {
-  prefix: string;
-  suffix: string;
-  injection: string;
-  filesAndPaths: FilePathAndContent[];
+export type SystemPromptComponents = {
+  prefixInstruction: string;
+  suffixInstruction: string;
+  injectionInstruction: string;
+  completeInstruction: string;
+  // filesAndPaths: FilePathAndContent[];
 };
 
 export class SystemPromptController {
@@ -23,11 +24,22 @@ export class SystemPromptController {
   }
 
   public async getSystemPromptComponents(): Promise<SystemPromptComponents> {
-    const prefix = await this.systemPromptModel.formatPrefixInstruction();
-    const suffix = await this.systemPromptModel.formatSuffixInstruction();
-    const injection = await this.systemPromptModel.formatInjectionInstruction();
-    const filesAndPaths = await this.systemPromptModel.getFilePathAndContents();
-    return { prefix, suffix, injection, filesAndPaths };
+    const prefixInstruction =
+      await this.systemPromptModel.formatPrefixInstruction();
+    const suffixInstruction =
+      await this.systemPromptModel.formatSuffixInstruction();
+    const injectionInstruction =
+      await this.systemPromptModel.formatInjectionInstruction();
+    const completeInstruction =
+      await this.systemPromptModel.getSystemPromptString();
+    // const filesAndPaths = await this.systemPromptModel.getFilePathAndContents();
+    return {
+      prefixInstruction,
+      suffixInstruction,
+      injectionInstruction,
+      completeInstruction,
+      // filesAndPaths,
+    };
   }
 
   public async addFilePaths(filePaths: string[]): Promise<boolean[]> {
@@ -87,6 +99,10 @@ export class SystemPromptController {
 
   public async getFilePaths(): Promise<string[]> {
     return this.systemPromptModel.filePaths;
+  }
+
+  public async getFilePathsAndContents(): Promise<FilePathAndContent[]> {
+    return await this.systemPromptModel.getFilePathsAndContents();
   }
 
   public static async isThisAFile(filePath: string): Promise<boolean> {

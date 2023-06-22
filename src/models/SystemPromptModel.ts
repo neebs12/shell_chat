@@ -46,7 +46,7 @@ export class SystemPromptModel {
     }
   }
 
-  public async getFilePathAndContents(): Promise<FilePathAndContent[]> {
+  public async getFilePathsAndContents(): Promise<FilePathAndContent[]> {
     // NOTE: This is useful for token counting and general debugging
     console.log(
       "In getFilePathAndContents at class SystemPromptModel. Watch where you use this"
