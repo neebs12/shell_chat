@@ -1,22 +1,25 @@
 import { ConversationHistoryModel } from "../models/ConversationHistoryModel";
+import { getTokenLengthByInput } from "../utils/tiktoken-instance";
 import { Messages } from "../types";
 export class ConversationHistoryController {
   private conversationModel: ConversationHistoryModel =
     new ConversationHistoryModel();
 
-  public appendAIMessage(content: string): void {
-    this.conversationModel.appendAIMessage(content);
+  public async appendAIMessage(content: string): Promise<void> {
+    const tokenLength = await getTokenLengthByInput(content);
+    this.conversationModel.appendAIMessage({ content, tokenLength });
   }
 
-  public appendUserMessage(content: string): void {
-    this.conversationModel.appendUserMessage(content);
+  public async appendUserMessage(content: string): Promise<void> {
+    const tokenLength = await getTokenLengthByInput(content);
+    this.conversationModel.appendUserMessage({ content, tokenLength });
   }
 
-  public getConversationHistory(): Messages {
+  public async getConversationHistory(): Promise<Messages> {
     return this.conversationModel.getConversationHistory();
   }
 
-  public resetConversationHistory(): void {
+  public async resetConversationHistory(): Promise<void> {
     this.conversationModel.resetConversationHistory();
   }
 }

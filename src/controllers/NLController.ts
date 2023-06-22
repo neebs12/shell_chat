@@ -43,7 +43,7 @@ export class NLController {
     const chat = new ChatOpenAI({
       modelName: process.env.MODEL_NAME ?? "gpt-3.5-turbo-16k",
       temperature: 0.5,
-      maxTokens: Number(process.env.MAX_RESPONSE_TOKENS) ?? 100,
+      maxTokens: Number(process.env.MAX_COMPLETION_TOKENS) ?? 100,
       streaming: true,
       callbackManager,
     });
@@ -60,7 +60,7 @@ export class NLController {
     const systemPromptString =
       await this.systemPromptController.getSystemPrompt();
     const conversationHistory =
-      this.conversationHistoryController.getConversationHistory();
+      await this.conversationHistoryController.getConversationHistory();
 
     const systemMessage = new SystemChatMessage(systemPromptString);
     const convoMessageArray = conversationHistory.map((message) => {
