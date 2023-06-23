@@ -1,36 +1,27 @@
-import { Tiktoken } from "tiktoken/lite";
-import { load } from "tiktoken/load";
-import registry from "tiktoken/registry.json";
-import models from "tiktoken/model_to_encoding.json";
+import { type TiktokenModel, type Tiktoken } from "js-tiktoken";
+import { encodingForModel } from "js-tiktoken";
 
 type EncoderCache = {
-  [key in keyof typeof models]?: Tiktoken;
+  [key in TiktokenModel]?: Tiktoken;
 };
 
 let encoderCache: EncoderCache = {};
 
-export const getEncoder = async (
-  modelName: keyof typeof models = "gpt-3.5-turbo"
-): Promise<Tiktoken> => {
-  let encoder = encoderCache[modelName];
-  // if cache does not exists
-  if (encoder === undefined) {
-    const properEncoding = models[modelName] as keyof typeof registry;
-    const model = await load(registry[properEncoding]);
-    encoder = new Tiktoken(
-      model.bpe_ranks,
-      model.special_tokens,
-      model.pat_str
-    );
-    encoderCache[modelName] = encoder;
-  }
-  return encoder;
-};
-
 export const getTokenLengthByInput = async (
   text: string,
-  modelName: keyof typeof models = "gpt-3.5-turbo"
+  modelName: TiktokenModel = "gpt-3.5-turbo"
 ): Promise<number> => {
-  const encoder = await getEncoder(modelName);
-  return encoder.encode(text).length;
+  let encoder = encoderCache[modelName];
+
+  if (!encoder) {
+    encoder = await encodingForModel(modelName);
+    encoderCache[modelName] = encoder;
+    if (!encodingForModel(modelName)) {
+      throw new Error(`Unknown model ${modelName}`);
+    }
+  }
+
+  // automatically free
+  const numTokens = encoder.encode(text).length;
+  return numTokens;
 };

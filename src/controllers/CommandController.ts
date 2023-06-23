@@ -218,11 +218,12 @@ export class CommandController {
 
   private async handleTokenReport(render: boolean = true): Promise<void> {
     const tokenReport = await this.tokenController.getTokenReport();
-    render && this.commandView.render(tokenReport);
+    render && this.commandView.renderTokenReport(tokenReport);
   }
 
   private async handleTokenFiles(render: boolean = true): Promise<void> {
-    const tokenFiles = await this.tokenController.getTokenFiles();
+    // const tokenFiles = await this.tokenController.getTokenFiles();
+    const tokenFiles = "unavailable command /token-files";
     render && this.commandView.render(tokenFiles);
   }
 }
