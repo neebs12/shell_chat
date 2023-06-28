@@ -9,6 +9,7 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 
 import { SystemPromptController } from "./SystemPromptController";
 import { ConversationHistoryController } from "./ConversationHistoryController";
+import { TokenController } from "./TokenController";
 import { NLView } from "../views/NLView";
 
 type NLControllerDependencies = {
@@ -20,6 +21,7 @@ type NLControllerDependencies = {
 export class NLController {
   private systemPromptController: SystemPromptController;
   private conversationHistoryController: ConversationHistoryController;
+  private tokenController: TokenController;
   private nlView: NLView = new NLView();
 
   constructor({
@@ -31,6 +33,10 @@ export class NLController {
     this.systemPromptController = systemPromptController;
     this.systemPromptController.addFilePaths(filePaths);
     this.conversationHistoryController = conversationHistoryController;
+    this.tokenController = new TokenController({
+      systemPromptController,
+      conversationHistoryController,
+    });
   }
 
   public async handleNL(nl: string): Promise<void> {
@@ -57,6 +63,7 @@ export class NLController {
   private async getChatMessages(): Promise<
     (SystemChatMessage | AIChatMessage | HumanChatMessage)[]
   > {
+    // TODOL perform truncation here...
     const systemPromptString =
       await this.systemPromptController.getSystemPrompt();
     const conversationHistory =

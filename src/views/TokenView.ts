@@ -25,10 +25,12 @@ export class TokenView {
     // - Error Correction: `<>`
     // - (Unaccounted) Conversation History: `<>`
     // start rendering here via this.render(...)
+    const tokensRemainingEmoji =
+      tokenReport.totalTokensRemaining > 0 ? "✅" : "❌";
     let output = "";
     output += "Token Report";
     output += "\n-------------";
-    output += `\nTotal Tokens Remaining: ${tokenReport.totalTokensRemaining}`;
+    output += `\nTotal Tokens Remaining: ${tokenReport.totalTokensRemaining} ${tokensRemainingEmoji}`;
     output += `\nTokens Budgetted: ${tokenReport.tokensBudgeted}`;
     output += `\nTokens Used: ${tokenReport.tokensUsed}`;
     output += `\nTotal for Files: ${tokenReport.totalForFiles}`;

@@ -3,10 +3,13 @@ import { CommandController } from "./CommandController";
 import { SystemPromptController } from "./SystemPromptController";
 import { ConversationHistoryController } from "./ConversationHistoryController";
 import { NLController } from "./NLController";
+import { ApplicationView } from "../views/ApplicationView";
+import { art1, art2, art3, art4, art5, art6 } from "../utils/art";
 
 export class ApplicationController {
   constructor(private filePaths: string[]) {
-    console.log(filePaths);
+    const applicationView = new ApplicationView();
+    applicationView.render(art6);
     this.filePaths = filePaths;
   }
 
