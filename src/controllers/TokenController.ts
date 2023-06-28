@@ -5,6 +5,7 @@ import { SPComponentsTLManager } from "./TokenControllerUtils/SPComponentsManage
 import { FPComponentsTLManager } from "./TokenControllerUtils/FPComponentsManager";
 import { CHComponentsTLManager } from "./TokenControllerUtils/CHComponentsManager";
 import { TokenReportBuilder } from "./TokenControllerUtils/TokenReportBuilder";
+import { TokenView } from "../views/TokenView";
 
 type TokenControllerDependencies = {
   systemPromptController: SystemPromptController;
@@ -15,6 +16,7 @@ export class TokenController {
   private systemPromptController: SystemPromptController;
   private conversationHistoryController: ConversationHistoryController;
   private tokenConfig = new TokenConfig();
+  private tokenView = new TokenView();
 
   constructor({
     systemPromptController,
@@ -24,7 +26,7 @@ export class TokenController {
     this.conversationHistoryController = conversationHistoryController;
   }
 
-  public async getTokenReport(): Promise<any> {
+  public async handleTokenReport(render: boolean = true): Promise<void> {
     const spComponentsTokenLengthManager = new SPComponentsTLManager(
       this.systemPromptController
     );
@@ -50,6 +52,7 @@ export class TokenController {
       chComponentsWithTL
     );
 
-    return await tokenReportBuilder.build();
+    const tokenReport = await tokenReportBuilder.build();
+    render && this.tokenView.renderTokenReport(tokenReport);
   }
 }

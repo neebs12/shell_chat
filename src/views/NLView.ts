@@ -1,18 +1,7 @@
-import chalk from "chalk";
+import { chalkRender } from "../utils/chalk-util";
 export class NLView {
   public async render(input: string, isToken: boolean = true) {
-    const chalkRender = (input: string) => {
-      // process.stdout.write(input);
-      const color = {
-        lightYellow: "#fddb45",
-        lightOrange: "#f7a11b",
-        lightGreen: "#98c379",
-        lightBlue: "#61afef",
-      };
-
-      process.stdout.write(chalk.hex(color.lightGreen).bold(input));
-    };
-    chalkRender(input);
+    chalkRender(input, "lightGreen");
     if (!isToken) {
       process.stdout.write("\n");
     }

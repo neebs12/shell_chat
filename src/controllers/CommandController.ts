@@ -217,8 +217,8 @@ export class CommandController {
   }
 
   private async handleTokenReport(render: boolean = true): Promise<void> {
-    const tokenReport = await this.tokenController.getTokenReport();
-    render && this.commandView.renderTokenReport(tokenReport);
+    await this.tokenController.handleTokenReport(render);
+    // render && this.commandView.renderTokenReport(tokenReport);
   }
 
   private async handleTokenFiles(render: boolean = true): Promise<void> {
