@@ -22,6 +22,7 @@ export type TokenReport = {
 
 export class TokenReportBuilder {
   constructor(
+    private totalTokensUsed: number,
     private tokenConfig: TokenConfig,
     private spComponentsWithTL: SPComponentsWithTL,
     private fpComponentsWithTL: FPComponentsWithTLTotal,
@@ -46,10 +47,6 @@ export class TokenReportBuilder {
     // - Error Correction: `<>`
     // - (Unaccounted) Conversation History: `<>`
     // All of this information will be outputted to an object
-    const tokenUsed =
-      this.spComponentsWithTL.completeInstructionTokenLength +
-      this.tokenConfig.reservedConversationTokens +
-      this.tokenConfig.errorCorrectionTokens;
 
     const fileBreakdown =
       this.fpComponentsWithTL.filePathsAndContentWithTokenLength.map((fpc) => {
@@ -67,9 +64,9 @@ export class TokenReportBuilder {
     };
 
     const returnObject = {
-      totalTokensRemaining: this.tokenConfig.maxTokens - tokenUsed,
+      totalTokensRemaining: this.tokenConfig.maxTokens - this.totalTokensUsed,
       tokensBudgeted: this.tokenConfig.maxTokens,
-      tokensUsed: tokenUsed,
+      tokensUsed: this.totalTokensUsed,
       totalForFiles: this.fpComponentsWithTL.filesTotalTokenLength,
       fileBreakdown: fileBreakdown,
       systemPromptTotalTokens:

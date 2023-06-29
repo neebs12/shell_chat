@@ -66,11 +66,19 @@ export class NLController {
     // TODOL perform truncation here...
     const systemPromptString =
       await this.systemPromptController.getSystemPrompt();
-    const conversationHistory =
-      await this.conversationHistoryController.getConversationHistory();
+    // const conversationHistory =
+    //   await this.conversationHistoryController.getConversationHistory();
+
+    const truncatedCH =
+      await this.tokenController.getTruncatedConversationhistory();
+
+    console.log(
+      "truncatedCHTL: ",
+      truncatedCH.reduce((acm, curr) => acm + curr.tokenLength, 0)
+    );
 
     const systemMessage = new SystemChatMessage(systemPromptString);
-    const convoMessageArray = conversationHistory.map((message) => {
+    const convoMessageArray = truncatedCH.map((message) => {
       if (message.key === "ai") {
         return new AIChatMessage(message.content);
       } else {

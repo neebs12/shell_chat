@@ -8,6 +8,14 @@ export type CHComponentsWithTL = {
 };
 
 export class CHComponentsTLManager {
+  public static async calculateTLForCH(chistory: Messages): Promise<number> {
+    const CHString = chistory.map((message) => message.content).join(" ");
+    const CHStringTokenLength = await getTokenLengthByInput(CHString);
+    // Addn token length due to tokens (<|user|>, etc) prepended on actual conversation entries
+    const CHArryTokenLength = chistory.length * 3;
+    return CHStringTokenLength + CHArryTokenLength;
+  }
+
   constructor(
     private conversationHistoryController: ConversationHistoryController
   ) {}
@@ -16,18 +24,12 @@ export class CHComponentsTLManager {
     const conversationHistory =
       await this.conversationHistoryController.getConversationHistory();
 
-    // append conversation history in to a single string
-    const CHString = conversationHistory
-      .map((message) => message.content)
-      .join(" ");
-
-    const CHStringTokenLength = await getTokenLengthByInput(CHString);
-    // Addn token length due to tokens (<|user|>, etc) prepended on actual conversation entries
-    const CHArryTokenLength = conversationHistory.length * 3;
+    const conversationHistoryTokenLength =
+      await CHComponentsTLManager.calculateTLForCH(conversationHistory);
 
     return {
       conversationHistory,
-      conversationHistoryTokenLength: CHStringTokenLength + CHArryTokenLength,
+      conversationHistoryTokenLength,
     };
   }
 }

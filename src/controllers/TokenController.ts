@@ -7,6 +7,8 @@ import { CHComponentsTLManager } from "./TokenControllerUtils/CHComponentsManage
 import { TokenReportBuilder } from "./TokenControllerUtils/TokenReportBuilder";
 import { TokenView } from "../views/TokenView";
 
+import { Message } from "../types";
+
 type TokenControllerDependencies = {
   systemPromptController: SystemPromptController;
   conversationHistoryController: ConversationHistoryController;
@@ -45,7 +47,10 @@ export class TokenController {
     const chComponentsWithTL =
       await chComponentsTokenLengthManager.getCHComponentsTokenLength();
 
+    const totalTokensUsed = await this.getTotalTokensUsed();
+
     const tokenReportBuilder = new TokenReportBuilder(
+      totalTokensUsed,
       this.tokenConfig,
       spComponentsWithTL,
       fpComponentsWithTL,
@@ -54,5 +59,50 @@ export class TokenController {
 
     const tokenReport = await tokenReportBuilder.build();
     render && this.tokenView.renderTokenReport(tokenReport);
+  }
+
+  public async getTruncatedConversationhistory(): Promise<Message[]> {
+    const chComponentsTokenLengthManager = new CHComponentsTLManager(
+      this.conversationHistoryController
+    );
+    const { conversationHistory } =
+      await chComponentsTokenLengthManager.getCHComponentsTokenLength();
+
+    const totalTokensUsed = await this.getTotalTokensUsed();
+    const totalTokensUsedWithReservedTokens =
+      totalTokensUsed + this.tokenConfig.reservedConversationTokens;
+    // NOTE: usage of `this.tokenConfig.reservedInputTokens` is not necessary bc history already contains most-recent user nl
+
+    const tokensRemaining =
+      totalTokensUsedWithReservedTokens -
+      (totalTokensUsed + this.tokenConfig.maxCompletionTokens);
+
+    // truncation logic
+    let truncatedCHArry = [...conversationHistory];
+    let currCHTokens = await CHComponentsTLManager.calculateTLForCH(
+      truncatedCHArry
+    );
+    while (currCHTokens > Math.abs(tokensRemaining)) {
+      truncatedCHArry = truncatedCHArry.slice(1);
+      currCHTokens = await CHComponentsTLManager.calculateTLForCH(
+        truncatedCHArry
+      );
+    }
+
+    return truncatedCHArry;
+  }
+
+  private async getTotalTokensUsed(): Promise<number> {
+    const spComponentsTokenLengthManager = new SPComponentsTLManager(
+      this.systemPromptController
+    );
+    const spComponentsWithTL =
+      await spComponentsTokenLengthManager.getSPComponentsTokenLength();
+
+    return (
+      spComponentsWithTL.completeInstructionTokenLength +
+      this.tokenConfig.reservedConversationTokens +
+      this.tokenConfig.errorCorrectionTokens
+    );
   }
 }
