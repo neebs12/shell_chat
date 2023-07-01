@@ -42,9 +42,11 @@ export class SystemPromptController {
     };
   }
 
+  /**
+   * @param {string[]} filePaths - list of file paths to be added (can be relative)
+   * @returns {boolean[]} - list of booleans determining which has been added and which has been unsuccessfully added
+   */
   public async addFilePaths(filePaths: string[]): Promise<boolean[]> {
-    // NOTE: Command Controller will /add here
-    // this will return a list of booleans determining which has been added and which has been unsuccessfully added
     const fileBooleanMap = filePaths.map(async (filePath) => {
       try {
         const absolutePath = path.resolve(filePath);

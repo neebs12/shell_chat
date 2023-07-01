@@ -18,6 +18,7 @@
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^10.0.1",
+    "glob": "^10.3.1",
     "js-tiktoken": "^1.0.7",
     "langchain": "^0.0.95",
     "ora": "^6.3.1",
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@types/chalk": "^2.2.0",
     "@types/commander": "^2.12.2",
+    "@types/glob": "^8.1.0",
     "@types/ora": "^3.2.0",
     "@types/readline-sync": "^1.4.4",
     "dotenv": "^16.1.4",

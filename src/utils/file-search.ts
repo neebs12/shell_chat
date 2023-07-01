@@ -1,56 +1,64 @@
+import * as glob from "glob";
 import fs from "fs";
 import path from "path";
 
-const IGNORE_DIRS = ["node_modules", ".git", ".vscode"];
-const MAX_DEPTH = 3;
-
-const walk = async (
-  dir: string,
-  fileCallback: (filePath: string) => Promise<void>,
-  ignoreDirs: string[],
-  maxDepth: number,
-  depth = 0
-) => {
-  if (depth > maxDepth) return;
-
-  const files = await fs.promises.readdir(dir);
-
-  for (const file of files) {
-    const fullPath = path.join(dir, file);
-
-    if (ignoreDirs.includes(file)) continue;
-
-    const stats = await fs.promises.stat(fullPath);
-
-    if (stats.isDirectory()) {
-      await walk(fullPath, fileCallback, ignoreDirs, maxDepth, depth + 1);
-    } else {
-      await fileCallback(fullPath);
-    }
-  }
-};
-
-const findFilesWithName = async (
-  fileName: string,
-  ignoreDirs: string[],
-  maxDepth: number = 3
+const findFilesWithPatterns = async (
+  patterns: string[],
+  ignoreFile: string = ".gitignore"
 ): Promise<string[]> => {
-  const filePaths: string[] = [];
+  let ignoreDirs: string[] = [];
 
-  const filePathCB = async (filePath: string): Promise<void> => {
-    // const doFilenamesMatch = path.basename(filePath) === fileName;
-    const doEndDirsMatch = filePath.endsWith(fileName);
-    if (doEndDirsMatch) {
-      const stats = await fs.promises.stat(filePath);
-      if (stats.isFile()) {
-        filePaths.push(filePath);
-      }
-    }
-  };
+  // read .gitignore to get the ignoreDirs!
+  // **/ prepended to to contents of .gitignore for it to work
+  // ignore `!` negation glob patterns
+  const fileContent = await fs.promises
+    .readFile(ignoreFile, "utf8")
+    .catch(() => {
+      console.log("No `.gitignore` file found. Continuing...");
+      return "";
+    });
 
-  await walk(process.cwd(), filePathCB, ignoreDirs, maxDepth);
+  const injectIgnoreDirs = fileContent + "\n" + ".git";
+  ignoreDirs = injectIgnoreDirs
+    .split("\n")
+    .filter((s) => {
+      // filter out empty lines and negation lines
+      const isEmpty = s.trim().length > 0;
+      const containsNegation = !s.includes("!");
+      return isEmpty && containsNegation;
+    })
+    .map((s) => {
+      // remove doubled up slashes and backslashes
+      const newPatterns = `**/${s.trim()}/**`
+        .replace(/\/\//g, "/")
+        .replace(/\\\\/g, "\\");
+      return newPatterns;
+    });
 
-  return filePaths;
+  // negation patterns must be separated from addn glob patterns
+  // https://github.com/isaacs/node-glob#comments-and-negation
+  let addnPatterns: string[] = [];
+  let negationPatterns: string[] = [];
+  patterns.forEach((p) => {
+    p.startsWith("!")
+      ? negationPatterns.push(p.slice(1))
+      : addnPatterns.push(p);
+  });
+
+  const finalIgnore = ignoreDirs.concat(negationPatterns);
+
+  const relFiles = await glob.glob(addnPatterns, {
+    ignore: finalIgnore,
+    nodir: true,
+    dot: true,
+  });
+
+  // console.log({ addnPatterns, negationPatterns, fileContent, ignoreDirs });
+
+  const absFiles = relFiles.map((relFile) =>
+    path.resolve(process.cwd(), relFile)
+  );
+  return absFiles;
 };
 
-export { findFilesWithName };
+export { findFilesWithPatterns };
