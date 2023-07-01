@@ -5,6 +5,7 @@ export const color = {
   lightOrange: "#f7a11b",
   lightGreen: "#98c379",
   lightBlue: "#61afef",
+  lightRed: "#fc6777", // "#c24038"
 };
 
 export const chalkRender = (

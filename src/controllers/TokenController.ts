@@ -7,6 +7,7 @@ import { CHComponentsTLManager } from "./TokenControllerUtils/CHComponentsManage
 import { TokenReportBuilder } from "./TokenControllerUtils/TokenReportBuilder";
 import { TokenView } from "../views/TokenView";
 
+import { getTokenLengthByInput } from "../utils/tiktoken-instance";
 import { Message } from "../types";
 
 type TokenControllerDependencies = {
@@ -92,6 +93,29 @@ export class TokenController {
     return truncatedCHArry;
   }
 
+  public async areTheAddedFilesTooLarge(): Promise<boolean> {
+    const condition =
+      (await this.getTotalTokensUsed()) > this.tokenConfig.maxTokens;
+
+    if (condition) this.tokenView.renderFilesTooLargeError();
+
+    return condition;
+  }
+
+  public async isNLInputTooLarge(input: string): Promise<boolean> {
+    const inputTL = await getTokenLengthByInput(input);
+    // INPUT_TL > (RC - COMPLETION_TL)
+    const inputReserve =
+      this.tokenConfig.reservedConversationTokens -
+      this.tokenConfig.maxCompletionTokens;
+    const condition = inputTL > inputReserve;
+
+    if (condition)
+      this.tokenView.renderNLInputTooLargeError({ inputTL, inputReserve });
+
+    return condition;
+  }
+
   private async getTotalTokensUsed(): Promise<number> {
     const spComponentsTokenLengthManager = new SPComponentsTLManager(
       this.systemPromptController
@@ -99,6 +123,7 @@ export class TokenController {
     const spComponentsWithTL =
       await spComponentsTokenLengthManager.getSPComponentsTokenLength();
 
+    // SP + RC + ER
     return (
       spComponentsWithTL.completeInstructionTokenLength +
       this.tokenConfig.reservedConversationTokens +

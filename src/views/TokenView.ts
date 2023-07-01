@@ -1,9 +1,9 @@
-import { chalkRender } from "../utils/chalk-util";
+import { chalkRender, color } from "../utils/chalk-util";
 import { type TokenReport } from "../controllers/TokenControllerUtils/TokenReportBuilder";
 
 export class TokenView {
-  public render(input: string) {
-    chalkRender(input, "lightBlue");
+  public render(input: string, renderColor: keyof typeof color = "lightBlue") {
+    chalkRender(input, renderColor);
     process.stdout.write("\n");
   }
 
@@ -47,5 +47,30 @@ export class TokenView {
     output += `\nError Correction: ${tokenReport.errorCorrection}`;
     output += `\n(Unaccounted) Conversation History: ${tokenReport.unaccountedConversationHistory}`;
     this.render(output);
+  }
+
+  public renderFilesTooLargeError(input?: string) {
+    this.render("File(s) too large. Please try again.", "lightRed");
+    this.render(
+      `Hint:
+- Use \`/tr\` to see files to tokens.
+- Use \`/rf\` to glob remove tracked files (to reduce token count).`,
+      "lightRed"
+    );
+  }
+
+  public renderNLInputTooLargeError({
+    inputTL,
+    inputReserve,
+  }: {
+    inputTL: number;
+    inputReserve: number;
+  }) {
+    this.render(
+      "Natural Langauge input is too long. Please try again.",
+      "lightRed"
+    );
+    this.render(`- Input Token Length is: ${inputTL}`, "lightRed");
+    this.render(`- Reserved Tokens for Input is: ${inputReserve}`, "lightRed");
   }
 }

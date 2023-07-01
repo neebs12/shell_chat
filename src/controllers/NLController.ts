@@ -40,7 +40,14 @@ export class NLController {
   }
 
   public async handleNL(nl: string): Promise<void> {
-    // so, we need to prepare the prompts and conversation array for the model
+    if (
+      (await this.tokenController.areTheAddedFilesTooLarge()) ||
+      (await this.tokenController.isNLInputTooLarge(nl))
+    ) {
+      this.nlView.renderNLError("Natural Language input is ignored...");
+      return;
+    }
+
     // append the nl
     this.conversationHistoryController.appendUserMessage(nl);
     const chatMessages = await this.getChatMessages();
@@ -63,12 +70,10 @@ export class NLController {
   private async getChatMessages(): Promise<
     (SystemChatMessage | AIChatMessage | HumanChatMessage)[]
   > {
-    // TODOL perform truncation here...
     const systemPromptString =
       await this.systemPromptController.getSystemPrompt();
-    // const conversationHistory =
-    //   await this.conversationHistoryController.getConversationHistory();
 
+    // truncation
     const truncatedCH =
       await this.tokenController.getTruncatedConversationhistory();
 

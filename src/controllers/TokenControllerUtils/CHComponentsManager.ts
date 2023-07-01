@@ -1,5 +1,5 @@
 import { type ConversationHistoryController } from "../ConversationHistoryController";
-import { type Messages } from "../../types";
+import { type Messages, type Message } from "../../types";
 import { getTokenLengthByInput } from "../../utils/tiktoken-instance";
 
 export type CHComponentsWithTL = {
