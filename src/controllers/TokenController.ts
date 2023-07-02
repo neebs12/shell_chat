@@ -104,7 +104,7 @@ export class TokenController {
 
   public async isNLInputTooLarge(input: string): Promise<boolean> {
     const inputTL = await getTokenLengthByInput(input);
-    // INPUT_TL > (RC - COMPLETION_TL)
+    // INPUT_TL > (RESERVED_C_TL - COMPLETION_TL)
     const inputReserve =
       this.tokenConfig.reservedConversationTokens -
       this.tokenConfig.maxCompletionTokens;

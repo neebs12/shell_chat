@@ -9,7 +9,6 @@ export type SystemPromptComponents = {
   suffixInstruction: string;
   injectionInstruction: string;
   completeInstruction: string;
-  // filesAndPaths: FilePathAndContent[];
 };
 
 export class SystemPromptController {

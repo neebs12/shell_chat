@@ -19,7 +19,7 @@ export class CommandView {
     filePaths: string[];
   }) {
     const headerEmoji = filePaths.length > 0 ? "✅" : "❌";
-    const emoji = filePaths.length > 0 ? "📁" : "❌";
+    const emoji = filePaths.length > 0 ? "📜" : "❌";
     this.render(
       `Glob (${pattern}), we have found AND added - (${filePaths.length}) ${headerEmoji}`
     );
@@ -45,7 +45,7 @@ export class CommandView {
     this.render(`The following files are being tracked 🕵️`);
     if (filePaths.length > 0) {
       filePaths.forEach((filePath) => {
-        this.renderIgnoringCwd(`🔎 ${filePath}`);
+        this.renderIgnoringCwd(`| 🔎 ${filePath}`);
       });
     } else {
       this.render(`❌ No files are being tracked`);
@@ -88,7 +88,7 @@ export class CommandView {
     // Sort array by number of found paths in ascending order
     const sortedFilepaths = filePaths.sort((a, b) => a.length - b.length);
     sortedFilepaths.forEach((filePath) =>
-      this.renderIgnoringCwd(`${emoji} ${filePath}`)
+      this.renderIgnoringCwd(`| ${emoji} ${filePath}`)
     );
   }
 

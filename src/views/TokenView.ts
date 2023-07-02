@@ -1,4 +1,4 @@
-import { chalkRender, color } from "../utils/chalk-util";
+import { chalkRender, color, chalkString } from "../utils/chalk-util";
 import { type TokenReport } from "../controllers/TokenControllerUtils/TokenReportBuilder";
 
 export class TokenView {
@@ -35,9 +35,21 @@ export class TokenView {
     output += `\nTokens Used: ${tokenReport.tokensUsed}`;
     output += `\nTotal for Files: ${tokenReport.totalForFiles}`;
     output += `\nFile Breakdown:`;
-    tokenReport.fileBreakdown.forEach((file) => {
-      output += `\n  ${file.fileName}: ${file.tokenLength}`;
-    });
+    let maxFileNameLength = Math.max(
+      ...tokenReport.fileBreakdown.map((file) => file.fileName.length)
+    );
+    output += `\n| 📚 ${"Filename".padEnd(maxFileNameLength)}: Tokens`;
+
+    tokenReport.fileBreakdown
+      .sort((a, b) => b.tokenLength - a.tokenLength)
+      .forEach((file) => {
+        let paddedFileName = file.fileName.padEnd(maxFileNameLength);
+        output += `\n| 📜 ${chalkString(
+          `${paddedFileName}: ${file.tokenLength}`,
+          "steelBlue"
+        )}`;
+      });
+
     output += `\nSystem Prompt Total Tokens: ${tokenReport.systemPromptTotalTokens}`;
     output += `\nSystem Prompt Breakdown:`;
     output += `\n  Prefix Instruction: ${tokenReport.systemPromptBreakdown.prefixInstruction}`;

@@ -6,6 +6,8 @@ export const color = {
   lightGreen: "#98c379",
   lightBlue: "#61afef",
   lightRed: "#fc6777", // "#c24038"
+  steelBlue: "#abb2bf",
+  gold: "#ffd700",
 };
 
 export const chalkRender = (
@@ -14,4 +16,11 @@ export const chalkRender = (
 ) => {
   // process.stdout.write(input);
   process.stdout.write(chalk.hex(color[myColor]).bold(input));
+};
+
+export const chalkString = (
+  input: string,
+  myColor: keyof typeof color = "lightGreen"
+) => {
+  return chalk.hex(color[myColor]).bold(input);
 };
