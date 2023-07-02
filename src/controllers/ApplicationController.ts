@@ -4,47 +4,61 @@ import { SystemPromptController } from "./SystemPromptController";
 import { ConversationHistoryController } from "./ConversationHistoryController";
 import { NLController } from "./NLController";
 import { ApplicationView } from "../views/ApplicationView";
-import { art1, art2, art3, art4, art5, art6 } from "../utils/art";
+import { MultilineController } from "./MultilineController";
+import { art6 } from "../utils/art";
+import { chalkString } from "../utils/chalk-util";
 
 export class ApplicationController {
+  private applicationView: ApplicationView = new ApplicationView();
+  private multilineController: MultilineController;
+  private conversationHistoryController: ConversationHistoryController;
+  private systemPromptController: SystemPromptController;
+  private nlController: NLController;
+  private commandController: CommandController;
+
   constructor(private filePaths: string[]) {
-    const applicationView = new ApplicationView();
-    applicationView.render(art6);
     this.filePaths = filePaths;
+
+    this.multilineController = new MultilineController();
+    this.conversationHistoryController = new ConversationHistoryController();
+    this.systemPromptController = new SystemPromptController();
+    this.nlController = new NLController({
+      filePaths: this.filePaths,
+      conversationHistoryController: this.conversationHistoryController,
+      systemPromptController: this.systemPromptController,
+    });
+    this.commandController = new CommandController({
+      conversationHistoryController: this.conversationHistoryController,
+      systemPromptController: this.systemPromptController,
+    });
   }
 
   public run(): void {
+    this.applicationView.render(art6);
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
     });
 
     // immediately set the prompt
-    // TODO: consider pre-rendering some message
     rl.setPrompt(">>> ");
     rl.prompt();
-
-    const conversationHistoryController = new ConversationHistoryController();
-    const systemPromptController = new SystemPromptController();
-    const nlController = new NLController({
-      filePaths: this.filePaths,
-      conversationHistoryController,
-      systemPromptController,
-    });
-    const commandController = new CommandController({
-      conversationHistoryController,
-      systemPromptController,
-    });
 
     rl.on("line", async (input: string): Promise<void> => {
       try {
         input = processInput(input);
+        const shouldContinue = await this.handleMultilineInput(rl, input);
+
+        if (!shouldContinue) {
+          return rl.prompt();
+        }
+
         if (input === "") {
           return rl.prompt();
         } else if (input[0] === "/") {
-          await commandController.handleCommand(input);
+          await this.commandController.handleCommand(input);
         } else {
-          await nlController.handleNL(input);
+          await this.nlController.handleNL(input);
         }
         return rl.prompt();
       } catch (error) {
@@ -57,6 +71,40 @@ export class ApplicationController {
       process.stdout.write("Exiting the program...");
       process.exit(0);
     });
+  }
+
+  private async handleMultilineInput(
+    rl: readline.Interface,
+    input: string
+  ): Promise<boolean> {
+    let isMultilineModeIgnored = true;
+    if (input.slice(0, 2) === "<<" && !this.multilineController.mode) {
+      // Case: starting mode
+      const delimeter = input.split(" ")[0].slice(2);
+      if (delimeter.length === 0) {
+        this.applicationView.renderInvalidDelimiter(input);
+        isMultilineModeIgnored = true;
+      } else {
+        this.multilineController.initialize(input);
+        // rl.setPrompt(chalkString(`${delimeter}> `, "lightBlue"));
+        rl.setPrompt(chalkString("📝 ", "lightBlue"));
+        isMultilineModeIgnored = false;
+      }
+    } else if (
+      input === this.multilineController.delimiter &&
+      this.multilineController.mode
+    ) {
+      // Case: ending mode
+      const nlBuffer = this.multilineController.returnBufferAndReset();
+      await this.nlController.handleNL(nlBuffer);
+      rl.setPrompt(">>> ");
+      isMultilineModeIgnored = false;
+    } else if (this.multilineController.mode) {
+      // Case: continuing mode
+      this.multilineController.addToBuffer(input);
+      isMultilineModeIgnored = false;
+    }
+    return isMultilineModeIgnored;
   }
 }
 
