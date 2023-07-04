@@ -54,7 +54,9 @@ export class SystemPromptModel {
   public async getSystemPromptString(): Promise<string> {
     // if there are no filePaths, return a "chat mode" system prompt.
     if (this._filePaths.length === 0) {
-      return `You are a expert coding AI. You will answer queries provided to you in a short and concise manner. Do not show any warnings or information regarding your capabilities. Do not answer in markdown mode`;
+      return `You are a expert coding AI. You will answer queries provided to you in a short and concise manner. Do not show any warnings or information regarding your capabilities.
+
+      For clarity to the user, ONLY ANSWER IN MARKDOWN FORMAT.`;
     }
 
     // for any harcoded prompts, put them here
