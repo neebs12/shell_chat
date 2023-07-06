@@ -9,18 +9,20 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node ./src/index.ts",
-    "build": "tsc && npm run postbuild && npm link",
+    "build": "npm install && tsc && npm run postbuild && npm link",
     "start": "node ./build/index.js",
     "postbuild": "node ./build/write-shebang.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/marked": "^5.0.0",
     "chalk": "^4.1.2",
     "commander": "^10.0.1",
     "glob": "^10.3.1",
     "js-tiktoken": "^1.0.7",
     "langchain": "^0.0.95",
+    "marked": "^5.1.0",
     "ora": "^6.3.1",
     "readline-sync": "^1.4.10"
   },
