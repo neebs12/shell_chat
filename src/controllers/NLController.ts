@@ -124,11 +124,11 @@ export class NLController {
     let buffer: string[] = [];
     let isCodeBlock = false;
 
-    let debugText = "";
+    let debugBuffer: string[] = [];
 
     const startCB = async () => {};
     const streamCB = async (token: string) => {
-      debugText += token;
+      debugBuffer.push(token);
       const subTokenArry = token.split("\n");
 
       for (let ind = 0; ind < subTokenArry.length; ind += 1) {
@@ -158,12 +158,12 @@ export class NLController {
           // render as normally with normal conditionals
           if (isCodeBlock || canFlipState) {
             // render as codeblock
-            await this.nlmdView.renderLineNLMDAsCodeBlock(bufferStr);
+            this.nlmdView.renderLineNLMDAsCodeBlock(bufferStr);
           } else if (bufferStr === "") {
             this.nlView.renderNewLine();
           } else {
             // render normally (if it contains valu)
-            await this.nlmdView.renderLineNLMD(bufferStr);
+            this.nlmdView.renderLineNLMD(bufferStr);
           }
           // reset buffer
           buffer = [];
@@ -175,15 +175,15 @@ export class NLController {
       const bufferStr = buffer.join("");
 
       isCodeBlock || bufferStr === "```"
-        ? await this.nlmdView.renderLineNLMDAsCodeBlock(bufferStr)
-        : await this.nlmdView.renderLineNLMD(bufferStr);
+        ? this.nlmdView.renderLineNLMDAsCodeBlock(bufferStr)
+        : this.nlmdView.renderLineNLMD(bufferStr);
 
       buffer = [];
       isCodeBlock = false;
 
       // console.log("--------------"); // check MD output
-      // await this.nlView.render(debugText);
-      // await this.nlView.renderNewLine();
+      // this.nlView.render(debugBuffer.join("|"));
+      // this.nlView.renderNewLine();
     };
 
     return { startCB, streamCB, endCB };
@@ -193,10 +193,10 @@ export class NLController {
     const startCB = async () => {};
     const streamCB = async (token: string) => {
       // cacheResponse += token;
-      await this.nlView.render(token);
+      this.nlView.render(token);
     };
     const endCB = async () => {
-      await this.nlView.renderNewLine();
+      this.nlView.renderNewLine();
     };
 
     return { startCB, streamCB, endCB };
@@ -205,7 +205,7 @@ export class NLController {
   private async getFullMDCBs(): Promise<StreamCallbacks> {
     let cachedResponse = "";
     const startCB = async () => {
-      await this.nlView.render("Rendering...", false, "darkGray");
+      this.nlView.render("Rendering...", false, "darkGray");
     };
     const streamCB = async (token: string) => {
       cachedResponse += token;
@@ -213,8 +213,8 @@ export class NLController {
     };
     const endCB = async () => {
       // await this.nlView.renderNewLine();
-      await this.nlmdView.renderFullNLMD(cachedResponse);
-      await this.nlView.renderNewLine();
+      this.nlmdView.renderFullNLMD(cachedResponse);
+      this.nlView.renderNewLine();
     };
 
     return { startCB, streamCB, endCB };

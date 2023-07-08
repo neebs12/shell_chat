@@ -64,17 +64,17 @@ marked.setOptions({
 
 // markdown-specific rendering
 export class NLMDView {
-  public async renderLineNLMDAsCodeBlock(input: string) {
+  public renderLineNLMDAsCodeBlock(input: string) {
     input = this.postProcess(input);
     input = chalk.gray(input);
     process.stdout.write(input + "\n");
   }
 
-  public async renderLineNLMD(input: string) {
+  public renderLineNLMD(input: string) {
     this.renderFullNLMD(input);
   }
 
-  public async renderFullNLMD(input: string) {
+  public renderFullNLMD(input: string) {
     const mdStr = marked(input);
     let postProcessedStr = this.postProcess(mdStr);
     process.stdout.write(postProcessedStr);
@@ -103,12 +103,12 @@ export class NLMDView {
 
 // token-specific rendering
 export class NLView {
-  public async renderNLError(input: string) {
+  public renderNLError(input: string) {
     chalkRender(input, "lightRed");
     process.stdout.write("\n");
   }
 
-  public async render(
+  public render(
     input: string,
     isToken: boolean = true,
     colour: keyof typeof color = "lightGreen"
