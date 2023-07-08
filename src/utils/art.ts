@@ -1,3 +1,5 @@
+import chalk from "chalk";
+
 export const art1 = ` ______  __  __  ______  __      __           ______  __  __  ______  ______
 /\\  ___\\/\\ \\_\\ \\/\\  ___\\/\\ \\    /\\ \\         /\\  ___\\/\\ \\_\\ \\/\\  __ \\/\\__  _\\
 \\ \\___  \\ \\  __ \\ \\  __\\\\ \\ \\___\\ \\ \\____    \\ \\ \\___\\ \\  __ \\ \\  __ \\/_/\\ \\/
@@ -42,3 +44,10 @@ export const art6 = ` ______  ______
  \\/\\_____\\ \\_____\\
   \\/_____/\\/_____/
   `;
+
+const body =
+  chalk.cyan("=".repeat(3)) +
+  chalk.redBright.bold("SHELL CHAT").split(" ").join(" ") +
+  chalk.cyan("=".repeat(3));
+
+export const art7 = `${chalk.dim(body)}`;

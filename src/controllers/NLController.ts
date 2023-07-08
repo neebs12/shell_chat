@@ -11,6 +11,7 @@ import { SystemPromptController } from "./SystemPromptController";
 import { ConversationHistoryController } from "./ConversationHistoryController";
 import { TokenController } from "./TokenController";
 import { NLView, NLMDView } from "../views/NLView";
+import chalk from "chalk";
 
 type NLControllerDependencies = {
   filePaths: string[];
@@ -96,10 +97,12 @@ export class NLController {
     const truncatedCH =
       await this.tokenController.getTruncatedConversationhistory();
 
-    // console.log(
-    //   "truncatedCHTL: ",
-    //   truncatedCH.reduce((acm, curr) => acm + curr.tokenLength, 0)
-    // );
+    console.log(
+      // "truncatedCHTL: ",
+      chalk.gray(
+        `${truncatedCH.reduce((acm, curr) => acm + curr.tokenLength, 0)}`
+      )
+    );
 
     const systemMessage = new SystemChatMessage(systemPromptString);
     const convoMessageArray = truncatedCH.map((message, ind) => {

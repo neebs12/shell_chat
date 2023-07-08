@@ -5,7 +5,7 @@ import { ConversationHistoryController } from "./ConversationHistoryController";
 import { NLController } from "./NLController";
 import { ApplicationView } from "../views/ApplicationView";
 import { MultilineController } from "./MultilineController";
-import { art6 } from "../utils/art";
+import { art6, art7 } from "../utils/art";
 import { chalkString } from "../utils/chalk-util";
 
 export class ApplicationController {
@@ -34,7 +34,7 @@ export class ApplicationController {
   }
 
   public run(): void {
-    this.applicationView.render(art6);
+    this.applicationView.render(art7);
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
