@@ -1,7 +1,7 @@
 {
   "name": "shell_chat",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.2",
+  "description": "Terminal Chat GPT",
   "main": "./build/index.js",
   "bin": {
     "sc": "./build/index.js"
@@ -13,7 +13,7 @@
     "start": "node ./build/index.js",
     "postbuild": "node ./build/write-shebang.js"
   },
-  "author": "",
+  "author": "Jason Aricheta",
   "license": "ISC",
   "dependencies": {
     "@types/marked": "^5.0.0",
@@ -24,7 +24,8 @@
     "langchain": "^0.0.95",
     "marked": "^5.1.0",
     "ora": "^6.3.1",
-    "readline-sync": "^1.4.10"
+    "readline-sync": "^1.4.10",
+    "dotenv": "^16.1.4"
   },
   "devDependencies": {
     "@types/chalk": "^2.2.0",
@@ -32,8 +33,10 @@
     "@types/glob": "^8.1.0",
     "@types/ora": "^3.2.0",
     "@types/readline-sync": "^1.4.4",
-    "dotenv": "^16.1.4",
     "ts-node": "^10.9.1",
     "typescript": "^5.1.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
