@@ -6,24 +6,25 @@ const renderer = new marked.Renderer();
 
 // this is ONLY for line by line makdown rendering
 // this will look weird on NORMAL markdown mode
+// renderer.code = function (code, language, isEscaped) {
+// const spaces = `\n`;
+// const trimmedCode = code.replace(/^\\n+|\\n+$/g, "");
+// const retainFences = `\`\`\`${language}\n${trimmedCode}\n\`\`\`${"\n".repeat(
+//   2
+// )}`;
+// return chalk.gray(retainFences);
+// return chalk.gray("  " + code + "\n");
+// };
+
 renderer.code = function (code, language, isEscaped) {
-  // const spaces = `\n`;
-  // const trimmedCode = code.replace(/^\\n+|\\n+$/g, "");
-  // const retainFences = `\`\`\`${language}\n${trimmedCode}\n\`\`\`${"\n".repeat(
-  //   2
-  // )}`;
-  // return chalk.gray(retainFences);
   return chalk.gray("  " + code + "\n");
 };
 
 renderer.heading = function (text, level) {
   return chalk.redBright.bold.underline(`\n${"#".repeat(level)} ${text}\n`);
-  // return chalk.yellow(`\n${"#".repeat(level)} ${text}\n`);
-  // return chalk.bgGreen(`\n${"#".repeat(level)} ${text}\n`);
 };
 
 renderer.strong = function (text) {
-  // return chalk.hex("#f48e95").bold.underline(`${text}`);
   return chalk.redBright.bold(`${text}`);
 };
 
@@ -37,8 +38,6 @@ renderer.codespan = function (text) {
 };
 
 renderer.paragraph = function (text) {
-  // "#d1cbbf"
-  // return chalk.hex("#858584")(`${text}\n`);
   return chalk.cyan(`${text}\n`);
 };
 
@@ -47,13 +46,30 @@ renderer.list = function (body, ordered, start) {
   return lines
     .map((line, index) => {
       const prefix = ordered ? `${start + index}.` : "-";
-      return `${chalk.cyan(prefix)} ${line}\n`;
+      return `${chalk.gray(prefix)} ${line}\n`;
     })
     .join("");
 };
 
 renderer.listitem = function (text) {
   return chalk.cyan(text.trim());
+};
+
+renderer.hr = function () {
+  return chalk.bold.gray("" + "-".repeat(3) + "\n");
+};
+
+renderer.link = function (href, title, text) {
+  const link = chalk.blue.underline(`${href}`);
+  return `${chalk.cyan(text)} (${link})`;
+};
+
+renderer.blockquote = function (quote) {
+  return chalk.dim.italic(`> ${quote}`);
+};
+
+renderer.del = function (text) {
+  return chalk.dim.strikethrough(`${text}`);
 };
 
 marked.setOptions({

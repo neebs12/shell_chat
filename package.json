@@ -1,6 +1,6 @@
 {
   "name": "shell_chat",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "description": "Terminal Chat GPT",
   "main": "./build/index.js",
   "bin": {
