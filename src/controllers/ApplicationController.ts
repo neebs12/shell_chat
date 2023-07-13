@@ -5,7 +5,7 @@ import { ConversationHistoryController } from "./ConversationHistoryController";
 import { NLController } from "./NLController";
 import { ApplicationView } from "../views/ApplicationView";
 import { MultilineController } from "./MultilineController";
-import { art6, art7 } from "../utils/art";
+import { art7 } from "../utils/art";
 import { chalkString } from "../utils/chalk-util";
 
 export class ApplicationController {
@@ -46,13 +46,16 @@ export class ApplicationController {
 
     rl.on("line", async (input: string): Promise<void> => {
       try {
-        input = processInput(input);
         const shouldContinue = await this.handleMultilineInput(rl, input);
 
         if (!shouldContinue) {
+          // NOTE: SO HACKY
+          // Works as long as piece of text being pasted for heredoc enters the terminal for shorter than 100ms lol
+          await new Promise((resolve) => setTimeout(resolve, 100));
           return rl.prompt();
         }
 
+        input = processInput(input);
         if (input === "") {
           return rl.prompt();
         } else if (input[0] === "/") {
@@ -83,11 +86,10 @@ export class ApplicationController {
       const delimeter = input.split(" ")[0].slice(2);
       if (delimeter.length === 0) {
         this.applicationView.renderInvalidDelimiter(input);
-        isMultilineModeIgnored = true;
+        isMultilineModeIgnored = false;
       } else {
         this.multilineController.initialize(input);
-        // rl.setPrompt(chalkString(`${delimeter}> `, "lightBlue"));
-        rl.setPrompt(chalkString("📝 ", "lightBlue"));
+        rl.setPrompt(chalkString(`(${delimeter})📝 `, "lightBlue"));
         isMultilineModeIgnored = false;
       }
     } else if (

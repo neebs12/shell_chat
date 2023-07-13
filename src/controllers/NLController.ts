@@ -187,37 +187,7 @@ export class NLController {
       // console.log("--------------"); // check MD output
       // this.nlView.render(debugBuffer.join("|"));
       // this.nlView.renderNewLine();
-    };
-
-    return { startCB, streamCB, endCB };
-  }
-
-  private async getStreamCBs(): Promise<StreamCallbacks> {
-    const startCB = async () => {};
-    const streamCB = async (token: string) => {
-      // cacheResponse += token;
-      this.nlView.render(token);
-    };
-    const endCB = async () => {
-      this.nlView.renderNewLine();
-    };
-
-    return { startCB, streamCB, endCB };
-  }
-
-  private async getFullMDCBs(): Promise<StreamCallbacks> {
-    let cachedResponse = "";
-    const startCB = async () => {
-      this.nlView.render("Rendering...", false, "darkGray");
-    };
-    const streamCB = async (token: string) => {
-      cachedResponse += token;
-      // await this.nlView.render(token);
-    };
-    const endCB = async () => {
-      // await this.nlView.renderNewLine();
-      this.nlmdView.renderFullNLMD(cachedResponse);
-      this.nlView.renderNewLine();
+      this.nlView.renderBgGrayColunm();
     };
 
     return { startCB, streamCB, endCB };

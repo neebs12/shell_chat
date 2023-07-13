@@ -138,4 +138,12 @@ export class NLView {
   public renderNewLine() {
     process.stdout.write("\n");
   }
+
+  public renderBgGrayColunm() {
+    let width = process.stdout.columns;
+    if (width === undefined) {
+      width = 3;
+    }
+    process.stdout.write(chalk.dim.gray("#".repeat(width)) + "\n");
+  }
 }
