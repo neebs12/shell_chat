@@ -110,10 +110,9 @@ export class NLController {
         return new AIChatMessage(message.content);
       } else {
         const content =
-          message.content +
           (ind === truncatedCH.length - 1
-            ? "- ANSWER IN STANDARD MARKDOWN, use bolds and italics"
-            : "");
+            ? "(format your answer in STANDARD MARKDOWN italics and bolds) My message is: "
+            : "") + message.content;
         return new HumanChatMessage(content);
       }
     });
@@ -124,124 +123,24 @@ export class NLController {
 
   // can you give me multiple examples about typescript
   private async getStreamMDCBs(): Promise<StreamCallbacks> {
-    let buffer: string[] = [];
-    let isCodeBlock = false;
+    this.nlmdView.buffer = [];
+    this.nlmdView.isCodeBlock = false;
+    // let isCodeBlock = false;
 
     let debugBuffer: string[] = [];
 
     const startCB = async () => {};
     const streamCB = async (token: string) => {
       debugBuffer.push(token);
-      const subTokenArry = token.split("\n");
-
-      for (let ind = 0; ind < subTokenArry.length; ind += 1) {
-        const currSubToken = subTokenArry[ind];
-        const canFlipState = canFlipCodeBlockState({
-          buffer,
-          currSubToken,
-        });
-        if (canFlipState) {
-          isCodeBlock = !isCodeBlock;
-        }
-        // now at last subToken
-        if (ind === subTokenArry.length - 1) {
-          if (subTokenArry.length == 1) {
-            // if only one subToken, append
-            buffer.push(currSubToken);
-          } else {
-            // else, start a new token
-            buffer = [currSubToken];
-          }
-          continue;
-        } else {
-          buffer.push(currSubToken);
-          // const tmpBuffer = buffer.map((bf) => (bf === "" ? "\n" : bf));
-          const bufferStr = buffer.join("");
-          // now either at start or middle of the overarching token
-          // render as normally with normal conditionals
-          if (isCodeBlock || canFlipState) {
-            // render as codeblock
-            this.nlmdView.renderLineNLMDAsCodeBlock(bufferStr);
-          } else if (bufferStr === "") {
-            this.nlView.renderNewLine();
-          } else {
-            // render normally (if it contains valu)
-            this.nlmdView.renderLineNLMD(bufferStr);
-          }
-          // reset buffer
-          buffer = [];
-        }
-      }
+      this.nlmdView.handleStreamCB(token);
     };
 
     const endCB = async () => {
-      const bufferStr = buffer.join("");
-
-      isCodeBlock || bufferStr === "```"
-        ? this.nlmdView.renderLineNLMDAsCodeBlock(bufferStr)
-        : this.nlmdView.renderLineNLMD(bufferStr);
-
-      buffer = [];
-      isCodeBlock = false;
-
+      this.nlmdView.handleEndCB();
       // console.log("--------------"); // check MD output
       // this.nlView.render(debugBuffer.join("|"));
-      // this.nlView.renderNewLine();
-      this.nlView.renderBgGrayColunm();
     };
 
     return { startCB, streamCB, endCB };
   }
 }
-
-// we know currSubToken is split by "\n"
-const canFlipCodeBlockState = ({
-  currSubToken,
-  buffer,
-}: {
-  currSubToken: string;
-  buffer: string[];
-}): boolean => {
-  const isFirstThreeBackticks = currSubToken.slice(0, 3) === "```";
-
-  // three backtick case
-  if (isFirstThreeBackticks) {
-    return true;
-  }
-
-  const isFirstTwoBackTicks = currSubToken.slice(0, 2) === "``";
-  // two backtick case
-  if (isFirstTwoBackTicks) {
-    // need to check buffer (enuf len to check last val)
-    if (buffer.length >= 1) {
-      const lastBufferVal = buffer[buffer.length - 1];
-      // this last bufferVal needs to end in a backtick to complete a three-set
-      const lastBufferValEndsWithBacktick = lastBufferVal === "`";
-      if (lastBufferValEndsWithBacktick) {
-        return true;
-      }
-    }
-  }
-
-  const isFirstBackTick = currSubToken[0] === "`";
-  // one backtick case
-  if (isFirstBackTick) {
-    // need to check buffer length
-    const lastBufferVal = buffer[buffer.length - 1];
-    if (buffer.length >= 2) {
-      const penultimateBufferVal = buffer[buffer.length - 2];
-      if (
-        (lastBufferVal === "`" && penultimateBufferVal === "`") ||
-        lastBufferVal === "``"
-      ) {
-        return true;
-      }
-    } else if (buffer.length >= 1) {
-      if (lastBufferVal === "``") {
-        return true;
-      }
-    }
-  }
-
-  return false;
-};

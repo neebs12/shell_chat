@@ -1,121 +1,6 @@
-import { marked, Renderer } from "marked";
 import chalk from "chalk";
 import { chalkRender, type color } from "../utils/chalk-util";
-
-const renderer = new marked.Renderer();
-
-// this is ONLY for line by line makdown rendering
-// this will look weird on NORMAL markdown mode
-// renderer.code = function (code, language, isEscaped) {
-// const spaces = `\n`;
-// const trimmedCode = code.replace(/^\\n+|\\n+$/g, "");
-// const retainFences = `\`\`\`${language}\n${trimmedCode}\n\`\`\`${"\n".repeat(
-//   2
-// )}`;
-// return chalk.gray(retainFences);
-// return chalk.gray("  " + code + "\n");
-// };
-
-renderer.code = function (code, language, isEscaped) {
-  return chalk.gray("  " + code + "\n");
-};
-
-renderer.heading = function (text, level) {
-  return chalk.redBright.bold.underline(`\n${"#".repeat(level)} ${text}\n`);
-};
-
-renderer.strong = function (text) {
-  return chalk.redBright.bold(`${text}`);
-};
-
-renderer.em = function (text) {
-  return chalk.redBright.italic(`${text}`);
-};
-
-renderer.codespan = function (text) {
-  const retainFences = `\`${text}\``;
-  return chalk.yellow(retainFences);
-};
-
-renderer.paragraph = function (text) {
-  return chalk.cyan(`${text}\n`);
-};
-
-renderer.list = function (body, ordered, start) {
-  const lines = body.trim().split("\n");
-  return lines
-    .map((line, index) => {
-      const prefix = ordered ? `${start + index}.` : "-";
-      return `${chalk.gray(prefix)} ${line}\n`;
-    })
-    .join("");
-};
-
-renderer.listitem = function (text) {
-  return chalk.cyan(text.trim());
-};
-
-renderer.hr = function () {
-  return chalk.bold.gray("" + "-".repeat(3) + "\n");
-};
-
-renderer.link = function (href, title, text) {
-  const link = chalk.blue.underline(`${href}`);
-  return `${chalk.cyan(text)} (${link})`;
-};
-
-renderer.blockquote = function (quote) {
-  return chalk.dim.italic(`> ${quote}`);
-};
-
-renderer.del = function (text) {
-  return chalk.dim.strikethrough(`${text}`);
-};
-
-marked.setOptions({
-  renderer,
-  mangle: false, // prevent markdown from altering underscores
-  headerIds: false, // prevent markdown from adding id's to headers
-});
-
-// markdown-specific rendering
-export class NLMDView {
-  public renderLineNLMDAsCodeBlock(input: string) {
-    input = this.postProcess(input);
-    input = chalk.gray(input);
-    process.stdout.write(input + "\n");
-  }
-
-  public renderLineNLMD(input: string) {
-    this.renderFullNLMD(input);
-  }
-
-  public renderFullNLMD(input: string) {
-    const mdStr = marked(input);
-    let postProcessedStr = this.postProcess(mdStr);
-    process.stdout.write(postProcessedStr);
-  }
-
-  private postProcess(input: string): string {
-    input = input.replace(/<br>/g, "\n");
-
-    const htmlDecode = (input: string) => {
-      for (const [key, value] of Object.entries({
-        "&amp;": "&",
-        "&lt;": "<",
-        "&gt;": ">",
-        "&quot;": '"',
-        "&#39;": "'",
-        // add more if needed
-      })) {
-        input = input.replace(new RegExp(key, "g"), value);
-      }
-      return input;
-    };
-
-    return htmlDecode(input);
-  }
-}
+import { mdLineStr } from "../utils/marked-utils";
 
 // token-specific rendering
 export class NLView {
@@ -147,3 +32,152 @@ export class NLView {
     process.stdout.write(chalk.dim.gray("#".repeat(width)) + "\n");
   }
 }
+
+// markdown-specific rendering
+export class NLMDView {
+  public nlView = new NLView();
+  public isCodeBlock: boolean = false;
+  public buffer: string[] = [];
+
+  public handleStreamCB(token: string) {
+    const subTokenArry = token.split("\n");
+
+    for (let ind = 0; ind < subTokenArry.length; ind += 1) {
+      const currSubToken = subTokenArry[ind];
+      const canFlipState = canFlipCodeBlockState({
+        buffer: this.buffer,
+        currSubToken,
+      });
+      if (canFlipState) {
+        this.isCodeBlock = !this.isCodeBlock;
+      }
+      // now at last subToken
+      if (ind === subTokenArry.length - 1) {
+        if (subTokenArry.length == 1) {
+          // if only one subToken, append
+          this.buffer.push(currSubToken);
+        } else {
+          // else, start a new token
+          this.buffer = [currSubToken];
+        }
+        continue;
+      } else {
+        this.buffer.push(currSubToken);
+        const bufferStr = this.buffer.join("");
+        // now either at start or middle of the overarching token
+        // render as normally with normal conditionals
+        if (this.isCodeBlock || canFlipState) {
+          // render as codeblock
+          this.renderLineNLMDAsCodeBlock(bufferStr);
+        } else if (bufferStr === "") {
+          this.nlView.renderNewLine();
+        } else {
+          // render normally (if it contains valu)
+          this.renderLineNLMD(bufferStr);
+        }
+        // reset buffer
+        this.buffer = [];
+      }
+    }
+  }
+
+  public handleEndCB() {
+    const bufferStr = this.buffer.join("");
+    if (this.isCodeBlock || bufferStr === "```") {
+      this.renderLineNLMDAsCodeBlock(bufferStr);
+    } else {
+      this.renderLineNLMD(bufferStr);
+    }
+    this.buffer = [];
+    this.isCodeBlock = false;
+    this.nlView.renderBgGrayColunm();
+  }
+
+  public renderLineNLMDAsCodeBlock(input: string) {
+    input = this.postProcess(input);
+    input = chalk.gray(input);
+    process.stdout.write(input + "\n");
+  }
+
+  public renderLineNLMD(input: string) {
+    this.renderFullNLMD(input);
+  }
+
+  public renderFullNLMD(input: string) {
+    const mdStr = mdLineStr(input);
+    let postProcessedStr = this.postProcess(mdStr);
+    process.stdout.write(postProcessedStr);
+  }
+
+  private postProcess(input: string): string {
+    input = input.replace(/<br>/g, "\n");
+
+    const htmlDecode = (input: string) => {
+      for (const [key, value] of Object.entries({
+        "&amp;": "&",
+        "&lt;": "<",
+        "&gt;": ">",
+        "&quot;": '"',
+        "&#39;": "'",
+        // add more if needed
+      })) {
+        input = input.replace(new RegExp(key, "g"), value);
+      }
+      return input;
+    };
+
+    return htmlDecode(input);
+  }
+}
+
+// we know currSubToken is split by "\n"
+const canFlipCodeBlockState = ({
+  currSubToken,
+  buffer,
+}: {
+  currSubToken: string;
+  buffer: string[];
+}): boolean => {
+  const isFirstThreeBackticks = currSubToken.slice(0, 3) === "```";
+
+  // three backtick case
+  if (isFirstThreeBackticks) {
+    return true;
+  }
+
+  const isFirstTwoBackTicks = currSubToken.slice(0, 2) === "``";
+  // two backtick case
+  if (isFirstTwoBackTicks) {
+    // need to check buffer (enuf len to check last val)
+    if (buffer.length >= 1) {
+      const lastBufferVal = buffer[buffer.length - 1];
+      // this last bufferVal needs to end in a backtick to complete a three-set
+      const lastBufferValEndsWithBacktick = lastBufferVal === "`";
+      if (lastBufferValEndsWithBacktick) {
+        return true;
+      }
+    }
+  }
+
+  const isFirstBackTick = currSubToken[0] === "`";
+  // one backtick case
+  if (isFirstBackTick) {
+    // need to check buffer length
+    const lastBufferVal = buffer[buffer.length - 1];
+    if (buffer.length >= 2) {
+      const penultimateBufferVal = buffer[buffer.length - 2];
+      if (
+        (lastBufferVal === "`" && penultimateBufferVal === "`") ||
+        lastBufferVal === "``"
+      ) {
+        return true;
+      }
+    } else if (buffer.length >= 1) {
+      if (lastBufferVal === "``") {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
