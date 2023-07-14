@@ -22,4 +22,15 @@ export class ConversationHistoryController {
   public async resetConversationHistory(): Promise<void> {
     this.conversationModel.resetConversationHistory();
   }
+
+  public async setConversationHistory(messages: Messages): Promise<void> {
+    // lets take advantage of existing interfaces, and use the append methods
+    for (const message of messages) {
+      if (message.key === "user") {
+        await this.appendUserMessage(message.content);
+      } else {
+        await this.appendAIMessage(message.content);
+      }
+    }
+  }
 }

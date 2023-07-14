@@ -3,9 +3,12 @@ import path from "path";
 import { TokenController } from "./TokenController";
 import { SystemPromptController } from "./SystemPromptController";
 import { ConversationHistoryController } from "./ConversationHistoryController";
+import { StateController } from "./StateController";
 import { CommandView } from "../views/CommandView";
 
 import { findFilesWithPatterns } from "../utils/file-search";
+
+import { type Message } from "../types";
 
 type CommandControllerDependencies = {
   systemPromptController: SystemPromptController;
@@ -28,14 +31,20 @@ export class CommandController {
     "/rf",
     "/remove-file-all",
     "/rfa",
-    "/list",
-    "/ls",
+    "/list-files",
+    "/lf",
     "/reset-conversation",
     "/rc",
     "/reset-all", // resets convo and revmoves files
     "/ra",
-    "/save",
+    "/save", // saves convo and file state
     "/s",
+    "/load", // loads convo and file state
+    "/l",
+    "/delete", // deletes convo and file state
+    "/d",
+    "/list-saves", // lists all saves
+    "/ls",
     "/token-report", // all token breakdown
     "/tr",
     "/token-files", // token remaining + file breakdown only
@@ -49,6 +58,7 @@ export class CommandController {
   private tokenController: TokenController;
   private systemPromptController: SystemPromptController;
   private conversationHistoryController: ConversationHistoryController;
+  private stateController: StateController = new StateController();
   private commandView: CommandView = new CommandView();
 
   constructor({
@@ -82,7 +92,7 @@ export class CommandController {
       await this.handleRemoveFileByPatterns(cmdArry);
     } else if (cmd === "/remove-file-all" || cmd === "/rfa") {
       await this.handleRemoveFileAll();
-    } else if (cmd === "/list" || cmd === "/ls") {
+    } else if (cmd === "/list-files" || cmd === "/lf") {
       await this.handleListFilePaths();
     } else if (cmd === "/reset-conversation" || cmd === "/rc") {
       await this.handleResetConversation();
@@ -92,12 +102,69 @@ export class CommandController {
       await this.handleTokenReport();
     } else if (cmd === "/token-files" || cmd === "/tf") {
       await this.handleTokenFiles();
+    } else if (cmd === "/save" || cmd === "/s") {
+      await this.handleSaveState(cmdArry);
+    } else if (cmd === "/load" || cmd === "/l") {
+      await this.handleLoadState(cmdArry);
+    } else if (cmd === "/delete" || cmd === "/d") {
+      await this.handleDeleteState(cmdArry);
+    } else if (cmd === "/list-saves" || cmd === "/ls") {
+      await this.stateController.listSavedStates();
     } else if (cmd === "/cwd" || cmd === "/pwd") {
       // NOTE: This is for debugging purposes only
       await this.commandView.render(process.cwd());
     } else {
       this.commandView.render(`${cmdArry[0]} has not yet been implemented`);
     }
+  }
+
+  private async handleSaveState(cmdArry: string[]): Promise<void> {
+    const saveName = cmdArry[1];
+    if (!saveName) {
+      this.commandView.renderInvalidCommand(["<save-name>"]);
+      return;
+    }
+
+    const conversationHistory =
+      await this.conversationHistoryController.getConversationHistory();
+    const trackedFiles = await this.systemPromptController.getFilePaths();
+    await this.stateController.saveState(
+      saveName,
+      conversationHistory,
+      trackedFiles
+    );
+  }
+
+  private async handleLoadState(cmdArry: string[]): Promise<void> {
+    const loadName = cmdArry[1];
+    if (!loadName) {
+      this.commandView.renderInvalidCommand(["<load-name>"]);
+      return;
+    }
+
+    const cb = async (
+      conversationHistory: Message[],
+      trackedFiles: string[]
+    ): Promise<void> => {
+      await this.conversationHistoryController.resetConversationHistory();
+      await this.systemPromptController.removeAllFilePaths();
+      await this.conversationHistoryController.setConversationHistory(
+        conversationHistory
+      );
+      await this.systemPromptController.addFilePaths(trackedFiles);
+    };
+
+    await this.stateController.loadState(loadName, cb);
+  }
+
+  private async handleDeleteState(cmdArry: string[]): Promise<void> {
+    const deleteName = cmdArry[1];
+    if (!deleteName) {
+      this.commandView.renderInvalidCommand(["<delete-name>"]);
+      return;
+    }
+
+    await this.stateController.deleteState(deleteName);
   }
 
   private async handleResetConversation(render: boolean = true): Promise<void> {
