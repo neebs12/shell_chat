@@ -46,12 +46,9 @@ export class ApplicationController {
 
     rl.on("line", async (input: string): Promise<void> => {
       try {
-        const shouldContinue = await this.handleMultilineInput(rl, input);
+        await this.multilineController.handleMultilineInput(rl, input);
 
-        if (!shouldContinue) {
-          // NOTE: SO HACKY
-          // Works as long as piece of text being pasted for heredoc enters the terminal for shorter than 100ms lol
-          await new Promise((resolve) => setTimeout(resolve, 100));
+        if (this.multilineController.mode) {
           return rl.prompt();
         }
 
@@ -61,6 +58,9 @@ export class ApplicationController {
         } else if (input[0] === "/") {
           await this.commandController.handleCommand(input);
         } else {
+          if (input === this.multilineController.delimiter) {
+            input = this.multilineController.returnBufferAndReset();
+          }
           await this.nlController.handleNL(input);
         }
         return rl.prompt();
@@ -74,39 +74,6 @@ export class ApplicationController {
       process.stdout.write("Exiting the program...");
       process.exit(0);
     });
-  }
-
-  private async handleMultilineInput(
-    rl: readline.Interface,
-    input: string
-  ): Promise<boolean> {
-    let isMultilineModeIgnored = true;
-    if (input.slice(0, 2) === "<<" && !this.multilineController.mode) {
-      // Case: starting mode
-      const delimeter = input.split(" ")[0].slice(2);
-      if (delimeter.length === 0) {
-        this.applicationView.renderInvalidDelimiter(input);
-        isMultilineModeIgnored = false;
-      } else {
-        this.multilineController.initialize(input);
-        rl.setPrompt(chalkString(`(${delimeter})📝 `, "lightBlue"));
-        isMultilineModeIgnored = false;
-      }
-    } else if (
-      input === this.multilineController.delimiter &&
-      this.multilineController.mode
-    ) {
-      // Case: ending mode
-      const nlBuffer = this.multilineController.returnBufferAndReset();
-      await this.nlController.handleNL(nlBuffer);
-      rl.setPrompt(">>> ");
-      isMultilineModeIgnored = false;
-    } else if (this.multilineController.mode) {
-      // Case: continuing mode
-      this.multilineController.addToBuffer(input);
-      isMultilineModeIgnored = false;
-    }
-    return isMultilineModeIgnored;
   }
 }
 
