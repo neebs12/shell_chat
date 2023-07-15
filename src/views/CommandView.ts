@@ -7,10 +7,6 @@ export class CommandView {
     process.stdout.write("\n");
   }
 
-  public rendeeReserConversation() {
-    this.render("Conversation has been reset 💬");
-  }
-
   public renderFileAdd({
     pattern,
     filePaths,

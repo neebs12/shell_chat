@@ -1,5 +1,3 @@
-import path from "path";
-
 import { TokenController } from "./TokenController";
 import { SystemPromptController } from "./SystemPromptController";
 import { ConversationHistoryController } from "./ConversationHistoryController";
@@ -18,6 +16,18 @@ type CommandControllerDependencies = {
 type FilePathsByPattern = {
   pattern: string;
   filePaths: string[];
+};
+
+type SaveStateInterfaceParams = {
+  saveName: string;
+  overwrite: boolean;
+  conversationHistory: Message[];
+  trackedFiles: string[];
+};
+
+type moveCacheToSaveInterfaceParams = {
+  saveName: string;
+  overwrite: boolean;
 };
 
 export class CommandController {
@@ -39,6 +49,12 @@ export class CommandController {
     "/ra",
     "/save", // saves convo and file state
     "/s",
+    "/save-overwrite", // shows that we are overwritting a save
+    "/so",
+    "/save-cache", // saves cache to a proper named save
+    "/sc",
+    "/save-cache-overwrite", // saves cache to a currently named save
+    "/sco",
     "/load", // loads convo and file state
     "/l",
     "/delete", // deletes convo and file state
@@ -79,38 +95,44 @@ export class CommandController {
 
   // main command handler
   public async handleCommand(commandInput: string): Promise<void> {
-    // this.commandView.render(`${command} not yet implemented`);
     const cmdArry = commandInput.split(" ");
     const cmd = cmdArry[0];
+    const incl = (...commands: string[]): boolean => commands.includes(cmd);
     if (!this.isCommandAvailable(cmd)) {
       this.commandView.render(`${cmd} is not a valid command`);
-    } else if (cmd === "/find" || cmd === "/f") {
+    } else if (incl("/f", "/find")) {
       await this.handleFileFindByPatterns(cmdArry);
-    } else if (cmd === "/find-add" || cmd === "/fa" || cmd === "/add") {
+    } else if (incl("/fa", "/find-add", "/add")) {
       await this.handleFileAddByPatterns(cmdArry);
-    } else if (cmd === "/remove-file" || cmd === "/rf") {
+    } else if (incl("/rf", "/remove-file")) {
       await this.handleRemoveFileByPatterns(cmdArry);
-    } else if (cmd === "/remove-file-all" || cmd === "/rfa") {
+    } else if (incl("/remove-file-all", "/rfa")) {
       await this.handleRemoveFileAll();
-    } else if (cmd === "/list-files" || cmd === "/lf") {
+    } else if (incl("/list-files", "/lf")) {
       await this.handleListFilePaths();
-    } else if (cmd === "/reset-conversation" || cmd === "/rc") {
+    } else if (incl("/reset-conversation", "/rc")) {
       await this.handleResetConversation();
-    } else if (cmd === "/reset-all" || cmd === "/ra") {
+    } else if (incl("/reset-all", "/ra")) {
       await this.handleResetAll();
-    } else if (cmd === "/token-report" || cmd === "/tr") {
+    } else if (incl("/token-report", "/tr")) {
       await this.handleTokenReport();
-    } else if (cmd === "/token-files" || cmd === "/tf") {
+    } else if (incl("/token-files", "/tf")) {
       await this.handleTokenFiles();
-    } else if (cmd === "/save" || cmd === "/s") {
+    } else if (incl("/save", "/s")) {
       await this.handleSaveState(cmdArry);
-    } else if (cmd === "/load" || cmd === "/l") {
+    } else if (incl("/save-overwrite", "/so")) {
+      await this.handleSaveOverwrite(cmdArry);
+    } else if (incl("/save-cache", "/sc")) {
+      await this.handleSaveFromCache(cmdArry);
+    } else if (incl("/save-cache-overwrite", "/sco")) {
+      await this.handleSaveFromCacheOverwrite(cmdArry);
+    } else if (incl("/load", "/l")) {
       await this.handleLoadState(cmdArry);
-    } else if (cmd === "/delete" || cmd === "/d") {
+    } else if (incl("/delete", "/d")) {
       await this.handleDeleteState(cmdArry);
-    } else if (cmd === "/list-saves" || cmd === "/ls") {
+    } else if (incl("/list-saves", "/ls")) {
       await this.stateController.listSavedStates();
-    } else if (cmd === "/cwd" || cmd === "/pwd") {
+    } else if (incl("/cwd", "/pwd")) {
       // NOTE: This is for debugging purposes only
       await this.commandView.render(process.cwd());
     } else {
@@ -120,19 +142,55 @@ export class CommandController {
 
   private async handleSaveState(cmdArry: string[]): Promise<void> {
     const saveName = cmdArry[1];
+    return this.stateController.saveStateInterface({
+      saveName,
+      overwrite: false,
+      conversationHistory:
+        await this.conversationHistoryController.getConversationHistory(),
+      trackedFiles: await this.systemPromptController.getFilePaths(),
+    });
+  }
+
+  private async handleSaveOverwrite(cmdArry: string[]): Promise<void> {
+    const saveName = cmdArry[1];
     if (!saveName) {
       this.commandView.renderInvalidCommand(["<save-name>"]);
       return;
     }
 
-    const conversationHistory =
-      await this.conversationHistoryController.getConversationHistory();
-    const trackedFiles = await this.systemPromptController.getFilePaths();
-    await this.stateController.saveState(
+    return this.stateController.saveStateInterface({
       saveName,
-      conversationHistory,
-      trackedFiles
-    );
+      overwrite: true,
+      conversationHistory:
+        await this.conversationHistoryController.getConversationHistory(),
+      trackedFiles: await this.systemPromptController.getFilePaths(),
+    });
+  }
+
+  private async handleSaveFromCache(cmdArry: string[]): Promise<void> {
+    const saveName = cmdArry[1];
+    if (!saveName) {
+      this.commandView.renderInvalidCommand(["<save-name>"]);
+      return;
+    }
+
+    await this.stateController.moveCacheToSaveInterface({
+      saveName,
+      overwrite: false,
+    });
+  }
+
+  private async handleSaveFromCacheOverwrite(cmdArry: string[]): Promise<void> {
+    const saveName = cmdArry[1];
+    if (!saveName) {
+      this.commandView.renderInvalidCommand(["<save-name>"]);
+      return;
+    }
+
+    await this.stateController.moveCacheToSaveInterface({
+      saveName,
+      overwrite: true,
+    });
   }
 
   private async handleLoadState(cmdArry: string[]): Promise<void> {
@@ -142,7 +200,7 @@ export class CommandController {
       return;
     }
 
-    const cb = async (
+    const loadStateCallback = async (
       conversationHistory: Message[],
       trackedFiles: string[]
     ): Promise<void> => {
@@ -154,7 +212,13 @@ export class CommandController {
       await this.systemPromptController.addFilePaths(trackedFiles);
     };
 
-    await this.stateController.loadState(loadName, cb);
+    await this.stateController.loadStateInterface({
+      loadName,
+      loadStateCallback,
+      conversationHistory:
+        await this.conversationHistoryController.getConversationHistory(),
+      trackedFiles: await this.systemPromptController.getFilePaths(),
+    });
   }
 
   private async handleDeleteState(cmdArry: string[]): Promise<void> {
