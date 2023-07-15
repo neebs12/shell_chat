@@ -98,7 +98,6 @@ export class NLController {
       await this.tokenController.getTruncatedConversationhistory();
 
     console.log(
-      // "truncatedCHTL: ",
       chalk.gray(
         `${truncatedCH.reduce((acm, curr) => acm + curr.tokenLength, 0)}`
       )
@@ -110,9 +109,10 @@ export class NLController {
         return new AIChatMessage(message.content);
       } else {
         const content =
+          message.content +
           (ind === truncatedCH.length - 1
-            ? "(format your answer in STANDARD MARKDOWN italics and bolds) My message is: "
-            : "") + message.content;
+            ? "\n\n(respond in STANDARD MARKDOWN italics and bolds)"
+            : "");
         return new HumanChatMessage(content);
       }
     });
@@ -125,7 +125,6 @@ export class NLController {
   private async getStreamMDCBs(): Promise<StreamCallbacks> {
     this.nlmdView.buffer = [];
     this.nlmdView.isCodeBlock = false;
-    // let isCodeBlock = false;
 
     let debugBuffer: string[] = [];
 

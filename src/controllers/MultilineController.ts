@@ -55,6 +55,26 @@ export class MultilineController {
     return nlBuffer;
   }
 
+  private timestampArray: number[] = [];
+
+  /**
+   * Calculates the delay between the last two timestamps in the timestampArray
+   * Used to delay following rl prints to prevent potential second rotation
+   * @returns {number} The delay in milliseconds
+   */
+  private calculateDelay(): number {
+    const latestTimestamp = this.timestampArray[this.timestampArray.length - 1];
+    const previousTimestamp =
+      this.timestampArray[this.timestampArray.length - 2];
+    const timeDiff = latestTimestamp - previousTimestamp;
+    if (previousTimestamp !== undefined && timeDiff < 250) {
+      return 1500; // Increase delay to 1.5s if timestamps are too close
+    } else {
+      console.log({ timestampArray: this.timestampArray });
+      return 250; // Otherwise, use the default delay of 250ms
+    }
+  }
+
   public async handleMultilineInput(
     rl: readline.Interface,
     input: string
@@ -72,10 +92,14 @@ export class MultilineController {
       this.setMode(false);
       rl.setPrompt(">>> ");
     } else if (this.mode) {
-      // Case: continuing mode
-      // NOTE: HACKY attempt at preventing txt rotation at parts of buffer when user pastes large text, the longer the delay, the larger the piece of text that can be pasted in without encountering rotation
-      await new Promise((resolve) => setTimeout(resolve, 250));
       this.addToBuffer(input);
+
+      // Case: continuing mode
+      // NOTE: HACKY attempt at preventing txt rotation
+      //   at parts of buffer when user pastes large text, the longer the delay, the larger the piece of text that can be pasted in without encountering rotation. calculateDelay extends second rotation delay, but first rotation delay cannot be delayed due to logic of rendering
+      this.timestampArray.push(Date.now()); // Store the current timestamp
+      const delay = this.calculateDelay(); // Calculate the delay based on the timestamps
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }
