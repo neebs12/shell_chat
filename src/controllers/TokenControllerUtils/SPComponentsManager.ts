@@ -12,7 +12,7 @@ export type SPComponentsWithTL = SPComponentsTLOnly & SystemPromptComponents;
 export class SPComponentsTLManager {
   constructor(private systemPromptController: SystemPromptController) {}
 
-  public async getSPComponentsTokenLength(): Promise<SPComponentsWithTL> {
+  public async getSPComponentsTL(): Promise<SPComponentsWithTL> {
     const systemPromptComponents =
       await this.systemPromptController.getSystemPromptComponents();
 

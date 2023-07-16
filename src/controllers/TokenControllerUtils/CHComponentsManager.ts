@@ -20,7 +20,7 @@ export class CHComponentsTLManager {
     private conversationHistoryController: ConversationHistoryController
   ) {}
 
-  public async getCHComponentsTokenLength(): Promise<CHComponentsWithTL> {
+  public async getCHComponentsTL(): Promise<CHComponentsWithTL> {
     const conversationHistory =
       await this.conversationHistoryController.getConversationHistory();
 

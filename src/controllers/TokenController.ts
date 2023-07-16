@@ -16,8 +16,9 @@ type TokenControllerDependencies = {
 };
 
 export class TokenController {
-  private systemPromptController: SystemPromptController;
-  private conversationHistoryController: ConversationHistoryController;
+  private spTLManager: SPComponentsTLManager;
+  private fpTLManager: FPComponentsTLManager;
+  private chTLManager: CHComponentsTLManager;
   private tokenConfig = new TokenConfig();
   private tokenView = new TokenView();
 
@@ -25,28 +26,18 @@ export class TokenController {
     systemPromptController,
     conversationHistoryController,
   }: TokenControllerDependencies) {
-    this.systemPromptController = systemPromptController;
-    this.conversationHistoryController = conversationHistoryController;
+    this.spTLManager = new SPComponentsTLManager(systemPromptController);
+    this.fpTLManager = new FPComponentsTLManager(systemPromptController);
+    this.chTLManager = new CHComponentsTLManager(conversationHistoryController);
   }
 
   public async handleTokenReport(render: boolean = true): Promise<void> {
-    const spComponentsTokenLengthManager = new SPComponentsTLManager(
-      this.systemPromptController
-    );
-    const spComponentsWithTL =
-      await spComponentsTokenLengthManager.getSPComponentsTokenLength();
+    const spComponentsWithTL = await this.spTLManager.getSPComponentsTL();
 
-    const fpComponentsTokenLengthManager = new FPComponentsTLManager(
-      this.systemPromptController
-    );
     const fpComponentsWithTL =
-      await fpComponentsTokenLengthManager.getFPComponentsWithTLTotalAllFiles();
+      await this.fpTLManager.getFPComponentsWithTLTotalAllFiles();
 
-    const chComponentsTokenLengthManager = new CHComponentsTLManager(
-      this.conversationHistoryController
-    );
-    const chComponentsWithTL =
-      await chComponentsTokenLengthManager.getCHComponentsTokenLength();
+    const chComponentsWithTL = await this.chTLManager.getCHComponentsTL();
 
     const totalTokensUsed = await this.getTotalTokensUsed();
 
@@ -63,20 +54,15 @@ export class TokenController {
   }
 
   public async getTruncatedConversationhistory(): Promise<Message[]> {
-    const chComponentsTokenLengthManager = new CHComponentsTLManager(
-      this.conversationHistoryController
-    );
-    const { conversationHistory } =
-      await chComponentsTokenLengthManager.getCHComponentsTokenLength();
+    const { conversationHistory } = await this.chTLManager.getCHComponentsTL();
+    const spComponentsWithTL = await this.spTLManager.getSPComponentsTL();
 
-    const totalTokensUsed = await this.getTotalTokensUsed();
-    const totalTokensUsedWithReservedTokens =
-      totalTokensUsed + this.tokenConfig.reservedConversationTokens;
-    // NOTE: usage of `this.tokenConfig.reservedInputTokens` is not necessary bc history already contains most-recent user nl
+    const tokenUsed =
+      spComponentsWithTL.completeInstructionTokenLength +
+      this.tokenConfig.errorCorrectionTokens +
+      this.tokenConfig.maxCompletionTokens;
 
-    const tokensRemaining =
-      totalTokensUsedWithReservedTokens -
-      (totalTokensUsed + this.tokenConfig.maxCompletionTokens);
+    const tokensRemaining = this.tokenConfig.maxTokens - tokenUsed;
 
     // truncation logic
     let truncatedCHArry = [...conversationHistory];
@@ -117,11 +103,7 @@ export class TokenController {
   }
 
   private async getTotalTokensUsed(): Promise<number> {
-    const spComponentsTokenLengthManager = new SPComponentsTLManager(
-      this.systemPromptController
-    );
-    const spComponentsWithTL =
-      await spComponentsTokenLengthManager.getSPComponentsTokenLength();
+    const spComponentsWithTL = await this.spTLManager.getSPComponentsTL();
 
     // SP + RC + ER
     return (
