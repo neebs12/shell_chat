@@ -64,4 +64,10 @@ export class StateView {
       `Saved to cache. To save this to a proper named save, use /sc <new-name>...`
     );
   }
+
+  public allConversationStatesDeleted() {
+    this.render(
+      `All conversation states deleted. To delete a specific save, use /delete <save-name>...`
+    );
+  }
 }

@@ -48,6 +48,8 @@ export class CommandController {
     "/l",
     "/delete", // deletes convo and file state
     "/d",
+    "/delete-all",
+    // "/da", // not enabled due to risk of accidental deletion
     "/list-saves", // lists all saves
     "/ls",
     "/token-report", // all token breakdown
@@ -121,6 +123,8 @@ export class CommandController {
       await this.handleLoadState(cmdArry);
     } else if (incl("/delete", "/d")) {
       await this.handleDeleteState(cmdArry);
+    } else if (incl("/delete-all")) {
+      await this.stateController.deleteAllStates();
     } else if (incl("/list-saves", "/ls")) {
       await this.stateController.listSavedStates();
     } else if (incl("/cwd", "/pwd")) {

@@ -127,6 +127,21 @@ export class StateController {
     }
   }
 
+  public async deleteAllStates(): Promise<void> {
+    const saveNames = Object.keys(this.saveFile);
+    if (saveNames.length === 0) {
+      // this.stateView.noSaveFound("any");
+      this.stateView.allConversationStatesDeleted();
+    } else {
+      this.saveFile = {};
+      await fs.promises.writeFile(
+        STATE_FILE,
+        JSON.stringify(this.saveFile, null, 2)
+      );
+      this.stateView.allConversationStatesDeleted();
+    }
+  }
+
   public listSavedStates(): void {
     const saveNames = Object.keys(this.saveFile);
     this.stateView.savedConversationStatesList(saveNames);
