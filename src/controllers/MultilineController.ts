@@ -70,7 +70,7 @@ export class MultilineController {
     if (previousTimestamp !== undefined && timeDiff < 250) {
       return 1500; // Increase delay to 1.5s if timestamps are too close
     } else {
-      console.log({ timestampArray: this.timestampArray });
+      // console.log({ timestampArray: this.timestampArray });
       return 250; // Otherwise, use the default delay of 250ms
     }
   }
@@ -86,11 +86,11 @@ export class MultilineController {
         ? this.initialize(input, "eof")
         : this.initialize(input);
       this._multilineView.renderStartHeredocMode();
-      rl.setPrompt(chalkString(`(${this.delimiter})📝 `, "lightBlue"));
+      // rl.setPrompt(chalkString(`(${this.delimiter})📝 `, "lightBlue"));
     } else if (input === this.delimiter && this.mode) {
       // Case: ending mode
       this.setMode(false);
-      rl.setPrompt(">>> ");
+      // rl.setPrompt(">>> ");
     } else if (this.mode) {
       this.addToBuffer(input);
 

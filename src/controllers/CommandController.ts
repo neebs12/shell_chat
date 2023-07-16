@@ -11,23 +11,12 @@ import { type Message } from "../types";
 type CommandControllerDependencies = {
   systemPromptController: SystemPromptController;
   conversationHistoryController: ConversationHistoryController;
+  stateController: StateController;
 };
 
 type FilePathsByPattern = {
   pattern: string;
   filePaths: string[];
-};
-
-type SaveStateInterfaceParams = {
-  saveName: string;
-  overwrite: boolean;
-  conversationHistory: Message[];
-  trackedFiles: string[];
-};
-
-type moveCacheToSaveInterfaceParams = {
-  saveName: string;
-  overwrite: boolean;
 };
 
 export class CommandController {
@@ -74,15 +63,17 @@ export class CommandController {
   private tokenController: TokenController;
   private systemPromptController: SystemPromptController;
   private conversationHistoryController: ConversationHistoryController;
-  private stateController: StateController = new StateController();
+  private stateController: StateController;
   private commandView: CommandView = new CommandView();
 
   constructor({
     systemPromptController,
     conversationHistoryController,
+    stateController,
   }: CommandControllerDependencies) {
     this.systemPromptController = systemPromptController;
     this.conversationHistoryController = conversationHistoryController;
+    this.stateController = stateController;
     this.tokenController = new TokenController({
       systemPromptController,
       conversationHistoryController,
