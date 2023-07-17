@@ -66,9 +66,7 @@ export class StateView {
   }
 
   public renderSavedToCacheBeforeLoad() {
-    this.render(
-      `Saved to cache. To save this to a proper named save, use /sc <new-name>...`
-    );
+    this.render(`To save cache to a proper name, use /sc <new-name>...`);
   }
 
   public allConversationStatesDeleted() {
