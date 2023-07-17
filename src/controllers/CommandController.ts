@@ -36,6 +36,8 @@ export class CommandController {
     "/rc",
     "/reset-all", // resets convo and revmoves files
     "/ra",
+    "/new", // creates a new convo state
+    "/n",
     "/save", // saves convo and file state
     "/s",
     "/save-overwrite", // shows that we are overwritting a save
@@ -50,6 +52,8 @@ export class CommandController {
     "/d",
     "/delete-all",
     // "/da", // not enabled due to risk of accidental deletion
+    "/rename",
+    "/rn",
     "/list-saves", // lists all saves
     "/ls",
     "/token-report", // all token breakdown
@@ -111,6 +115,8 @@ export class CommandController {
       await this.handleTokenReport();
     } else if (incl("/token-files", "/tf")) {
       await this.handleTokenFiles();
+    } else if (incl("/new", "/n")) {
+      await this.handleNewState(cmdArry);
     } else if (incl("/save", "/s")) {
       await this.handleSaveState(cmdArry);
     } else if (incl("/save-overwrite", "/so")) {
@@ -123,8 +129,10 @@ export class CommandController {
       await this.handleLoadState(cmdArry);
     } else if (incl("/delete", "/d")) {
       await this.handleDeleteState(cmdArry);
-    } else if (incl("/delete-all")) {
+    } else if (incl("/delete-all" /*, "/da"*/)) {
       await this.stateController.deleteAllStates();
+    } else if (incl("/rename", "/rn")) {
+      await this.handleRename(cmdArry);
     } else if (incl("/list-saves", "/ls")) {
       await this.stateController.listSavedStates();
     } else if (incl("/cwd", "/pwd")) {
@@ -133,6 +141,37 @@ export class CommandController {
     } else {
       this.commandView.render(`${cmdArry[0]} has not yet been implemented`);
     }
+  }
+
+  private async handleNewState(cmdArry: string[]): Promise<void> {
+    const newStateName = cmdArry[1];
+    if (!newStateName) {
+      this.commandView.renderInvalidCommand(["<new-name>"]);
+      return;
+    }
+
+    const newStateCallback = async (): Promise<void> => {
+      await this.conversationHistoryController.resetConversationHistory();
+      await this.systemPromptController.removeAllFilePaths();
+    };
+
+    await this.stateController.newStateInterface({
+      newStateName,
+      newStateCallback,
+      conversationHistory:
+        await this.conversationHistoryController.getConversationHistory(),
+      trackedFiles: await this.systemPromptController.getFilePaths(),
+    });
+  }
+
+  private async handleRename(cmdArry: string[]): Promise<void> {
+    const newName = cmdArry[1];
+    if (!newName) {
+      this.commandView.renderInvalidCommand(["<new-name>"]);
+      return;
+    }
+
+    await this.stateController.renameCurrentState(newName);
   }
 
   private async handleSaveState(cmdArry: string[]): Promise<void> {

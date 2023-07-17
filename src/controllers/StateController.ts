@@ -17,6 +17,8 @@ type LoadConversationCallback = (
   trackedFiles: string[]
 ) => Promise<void>;
 
+type NewStateCallback = () => Promise<void>;
+
 type SaveStateParams = {
   saveName: string;
   conversationHistory: Message[];
@@ -36,14 +38,19 @@ type SaveStateInterfaceParams = {
   trackedFiles: string[];
 };
 
-type moveCacheToSaveInterfaceParams = {
+type MoveCacheToSaveInterfaceParams = {
   saveName: string;
   overwrite: boolean;
 };
 
-type loadStateInterface = {
+type LoadStateInterface = {
   loadName: string;
   loadStateCallback: LoadConversationCallback;
+} & SaveData;
+
+type NewStateInterface = {
+  newStateName: string;
+  newStateCallback: NewStateCallback;
 } & SaveData;
 
 export class StateController {
@@ -64,6 +71,21 @@ export class StateController {
     } else {
       this.saveFile = {};
       fs.writeFileSync(STATE_FILE, JSON.stringify(this.saveFile, null, 2));
+    }
+  }
+
+  public async renameCurrentState(newName: string): Promise<void> {
+    if (this.saveFile[this.saveName]) {
+      this.saveFile[newName] = this.saveFile[this.saveName];
+      delete this.saveFile[this.saveName];
+      await fs.promises.writeFile(
+        STATE_FILE,
+        JSON.stringify(this.saveFile, null, 2)
+      );
+      this.stateView.conversationStateRenamed(this.saveName, newName);
+      this.saveName = newName;
+    } else {
+      this.stateView.render(`You are currently not in a saved state...`);
     }
   }
 
@@ -112,6 +134,19 @@ export class StateController {
     } else {
       this.stateView.noSaveFound(saveName);
     }
+  }
+
+  public async createEmptyState(
+    saveName: string,
+    callback: NewStateCallback
+  ): Promise<void> {
+    await this.saveState({
+      saveName,
+      conversationHistory: [],
+      trackedFiles: [],
+    });
+    await callback();
+    this.stateView.render(`Created new state "${saveName}"...`);
   }
 
   public async deleteState(saveName: string): Promise<void> {
@@ -191,7 +226,7 @@ export class StateController {
   public async moveCacheToSaveInterface({
     saveName,
     overwrite,
-  }: moveCacheToSaveInterfaceParams): Promise<void> {
+  }: MoveCacheToSaveInterfaceParams): Promise<void> {
     const saveNames = await this.getSavedStateNames();
     const isNameTaken = saveName && saveNames.includes(saveName);
 
@@ -214,7 +249,7 @@ export class StateController {
     loadStateCallback,
     conversationHistory,
     trackedFiles,
-  }: loadStateInterface): Promise<void> {
+  }: LoadStateInterface): Promise<void> {
     // keep this in commandcontroller
     // cannot load the cache (for ungodly amounts of simplicity)
     if (loadName === "cache") {
@@ -231,22 +266,18 @@ export class StateController {
     }
 
     const currSaveName = this.getSaveName();
-    if (currSaveName) {
-      if (currSaveName === loadName) {
-        this.stateView.renderLoadingAlreadyCurrentState(loadName);
-        return;
-      } else {
-        await this.saveState({
-          saveName: currSaveName,
-          conversationHistory,
-          trackedFiles,
-        });
+    // user trying to load the current state, cannot do this
+    if (currSaveName === loadName) {
+      this.stateView.renderLoadingAlreadyCurrentState(loadName);
+      return;
+    }
 
-        // Notify the user if the current chat is saved as cache.
-        if (currSaveName === "cache") {
-          this.stateView.renderSavedToCacheBeforeLoad();
-        }
-      }
+    if (currSaveName) {
+      await this.saveState({
+        saveName: currSaveName,
+        conversationHistory,
+        trackedFiles,
+      });
     } else {
       await this.saveState({
         saveName: "cache",
@@ -257,5 +288,43 @@ export class StateController {
     }
 
     await this.loadState(loadName, loadStateCallback);
+  }
+
+  public async newStateInterface({
+    newStateName,
+    newStateCallback,
+    conversationHistory,
+    trackedFiles,
+  }: NewStateInterface): Promise<void> {
+    if (newStateName === "cache") {
+      this.stateView.render(
+        `The "cache" cannot be specifically created - sorry 🙇`
+      );
+      return;
+    }
+
+    const savedNames = await this.getSavedStateNames();
+    if (savedNames.includes(newStateName)) {
+      this.stateView.render(`The state ${newStateName} already exists`);
+      return;
+    }
+
+    const currSaveName = this.getSaveName();
+    if (currSaveName) {
+      await this.saveState({
+        saveName: currSaveName,
+        conversationHistory,
+        trackedFiles,
+      });
+    } else {
+      await this.saveState({
+        saveName: "cache",
+        conversationHistory,
+        trackedFiles,
+      });
+      this.stateView.renderSavedToCacheBeforeLoad();
+    }
+
+    await this.createEmptyState(newStateName, newStateCallback);
   }
 }

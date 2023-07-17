@@ -6,6 +6,12 @@ export class StateView {
     process.stdout.write("\n");
   }
 
+  public conversationStateRenamed(oldName: string, newName: string): void {
+    this.render(
+      `Current conversation state "${oldName}" renamed to "${newName}"...`
+    );
+  }
+
   public conversationStateSaved(saveName: string): void {
     this.render(`Conversation state "${saveName}" saved...`);
   }
