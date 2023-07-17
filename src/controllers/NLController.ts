@@ -111,7 +111,7 @@ export class NLController {
         const content =
           message.content +
           (ind === truncatedCH.length - 1
-            ? "\n\n(addendum: respond in standard markdown with italics & bolds but don't insert italics/bolds within codeblocks please)"
+            ? "\n\n(silent note: respond in standard markdown with italics & bolds but don't insert italics/bolds within codeblocks please)"
             : "");
         return new HumanChatMessage(content);
       }

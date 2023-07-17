@@ -109,18 +109,17 @@ export class ApplicationController {
   }
 
   private defaultPrompt(): string {
-    const name = chalk.gray(`(${this.stateController.getSaveName()})`);
-    const promptStr = `${
-      this.stateController.getSaveName() ? `${name}` : ">>"
-    }> `;
-    return promptStr;
+    const name = this.stateController.getSaveName();
+    const bracketedName = chalk.gray(`(${name})`);
+    const promptStr = chalk.gray`${
+      this.stateController.getSaveName() ? `${bracketedName}` : ">>"
+    }`;
+    // const promptStr = `${name}> `;
+    return promptStr + (name ? chalk.white : chalk.gray)`>`;
   }
 
   private multilinePrompt(): string {
-    return chalkString(
-      `(${this.multilineController.delimiter})📝 `,
-      "lightBlue"
-    );
+    return chalk.blue(`(${this.multilineController.delimiter})📝 `);
   }
 }
 

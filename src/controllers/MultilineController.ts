@@ -64,14 +64,16 @@ export class MultilineController {
    */
   private calculateDelay(): number {
     const latestTimestamp = this.timestampArray[this.timestampArray.length - 1];
+    const defaultDelay = 200; // first delay
+    const longDelay = 1500; // following delays
     const previousTimestamp =
       this.timestampArray[this.timestampArray.length - 2];
     const timeDiff = latestTimestamp - previousTimestamp;
-    if (previousTimestamp !== undefined && timeDiff < 250) {
-      return 1500; // Increase delay to 1.5s if timestamps are too close
+    if (previousTimestamp !== undefined && timeDiff < defaultDelay) {
+      return longDelay; // Increase delay to 1.5s if timestamps are too close
     } else {
       // console.log({ timestampArray: this.timestampArray });
-      return 250; // Otherwise, use the default delay of 250ms
+      return defaultDelay; // Otherwise, use the default delay
     }
   }
 
