@@ -140,16 +140,23 @@ export class StateController {
     saveName: string,
     callback: NewStateCallback
   ): Promise<void> {
-    await this.saveState({
-      saveName,
-      conversationHistory: [],
-      trackedFiles: [],
-    });
+    this.saveFile[saveName] = { conversationHistory: [], trackedFiles: [] };
+    await fs.promises.writeFile(
+      STATE_FILE,
+      JSON.stringify(this.saveFile, null, 2)
+    );
+    this.saveName = saveName;
     await callback();
     this.stateView.render(`Created new state "${saveName}"...`);
   }
 
   public async deleteState(saveName: string): Promise<void> {
+    // cannot delete the current state
+    if (this.saveName === saveName) {
+      this.stateView.render(`Cannot delete the current state "${saveName}"...`);
+      return;
+    }
+
     if (this.saveFile[saveName]) {
       delete this.saveFile[saveName];
       await fs.promises.writeFile(
@@ -169,6 +176,7 @@ export class StateController {
       this.stateView.allConversationStatesDeleted();
     } else {
       this.saveFile = {};
+      this.saveName = "";
       await fs.promises.writeFile(
         STATE_FILE,
         JSON.stringify(this.saveFile, null, 2)

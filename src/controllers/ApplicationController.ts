@@ -115,7 +115,7 @@ export class ApplicationController {
       this.stateController.getSaveName() ? `${bracketedName}` : ">>"
     }`;
     // const promptStr = `${name}> `;
-    return promptStr + (name ? chalk.white : chalk.gray)`>`;
+    return promptStr + (name ? chalk.white : chalk.gray)`> `;
   }
 
   private multilinePrompt(): string {
