@@ -96,7 +96,7 @@ export class CommandController {
     const cmd = cmdArry[0];
     const incl = (...commands: string[]): boolean => commands.includes(cmd);
     if (!this.isCommandAvailable(cmd)) {
-      this.commandView.render(`${cmd} is not a valid command`);
+      this.commandView.headerRender(`**${cmd}** is not a valid command`);
     } else if (incl("/f", "/find")) {
       await this.handleFileFindByPatterns(cmdArry);
     } else if (incl("/fa", "/find-add", "/add")) {
@@ -137,9 +137,13 @@ export class CommandController {
       await this.stateController.listSavedStates();
     } else if (incl("/cwd", "/pwd")) {
       // NOTE: This is for debugging purposes only
-      await this.commandView.render(process.cwd());
+      await this.commandView.render(
+        this.commandView.genericStyle(process.cwd())
+      );
     } else {
-      this.commandView.render(`${cmdArry[0]} has not yet been implemented`);
+      this.commandView.headerRender(
+        `**${cmdArry[0]}** has not yet been implemented`
+      );
     }
   }
 
@@ -267,7 +271,8 @@ export class CommandController {
 
   private async handleResetConversation(render: boolean = true): Promise<void> {
     await this.conversationHistoryController.resetConversationHistory();
-    render && this.commandView.render("Conversation has been reset 💬");
+    render &&
+      this.commandView.headerRender("Conversation has been **reset** 💬");
   }
 
   private async handleFileAddByPatterns(
@@ -328,7 +333,8 @@ export class CommandController {
 
   private async handleRemoveFileAll(render: boolean = true): Promise<void> {
     await this.systemPromptController.removeAllFilePaths();
-    render && this.commandView.render(`All files have been removed 🗑️`);
+    render &&
+      this.commandView.headerRender(`All files have been **un tracked** 🗑️`);
   }
 
   private async handleResetAll(render: boolean = true): Promise<void> {
@@ -368,7 +374,7 @@ export class CommandController {
 
   private async handleTokenFiles(render: boolean = true): Promise<void> {
     // const tokenFiles = await this.tokenController.getTokenFiles();
-    const tokenFiles = "unavailable command /token-files";
-    render && this.commandView.render(tokenFiles);
+    render &&
+      this.commandView.headerRender("unavailable command **/token-files**");
   }
 }

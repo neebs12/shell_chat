@@ -1,10 +1,23 @@
-import { chalkRender } from "../utils/chalk-util";
 import chalk from "chalk";
+import { Art } from "../utils/art";
 
 export class CommandView {
+  public genericStyle = chalk.blue;
+  public highlightStyle = chalk.redBright.bold;
+  private av = new Art(this.genericStyle, this.highlightStyle);
+
   public render(input: string) {
-    chalkRender(input, "lightBlue");
+    process.stdout.write(input);
     process.stdout.write("\n");
+  }
+
+  public headerRender(input: string) {
+    const str = this.av.createMessage(input);
+    this.render(str);
+  }
+
+  private headerPattern(pattern: string) {
+    return pattern.replace(/\*\*/g, "\\*\\*");
   }
 
   public renderFileAdd({
@@ -16,8 +29,10 @@ export class CommandView {
   }) {
     const headerEmoji = filePaths.length > 0 ? "✅" : "❌";
     const emoji = filePaths.length > 0 ? "📜" : "❌";
-    this.render(
-      `Glob (${pattern}), we have found AND added - (${filePaths.length}) ${headerEmoji}`
+    this.headerRender(
+      `Glob (**${this.headerPattern(pattern)}**) added **${
+        filePaths.length
+      }** files ${headerEmoji}`
     );
     this.renderPatternAndFileNames({ emoji, pattern, filePaths });
   }
@@ -31,20 +46,22 @@ export class CommandView {
   }) {
     const headerEmoji = filePaths.length > 0 ? "✅" : "😔";
     const emoji = filePaths.length > 0 ? "🗑️" : "❌";
-    this.render(
-      `Glob (${pattern}), we have removed - (${filePaths.length}) ${headerEmoji}:`
+    this.headerRender(
+      `Glob (**${this.headerPattern(pattern)}**) removed **${
+        filePaths.length
+      }** files ${headerEmoji}:`
     );
     this.renderPatternAndFileNames({ emoji, pattern, filePaths });
   }
 
   public renderListFilePaths(filePaths: string[]) {
-    this.render(`The following files are being tracked 🕵️`);
+    this.headerRender(
+      `We are tracking **${filePaths.length || "no"}** files 🕵️`
+    );
     if (filePaths.length > 0) {
       filePaths.forEach((filePath) => {
         this.renderIgnoringCwd(`| 🔎 ${filePath}`);
       });
-    } else {
-      this.render(`❌ No files are being tracked`);
     }
   }
 
@@ -57,14 +74,16 @@ export class CommandView {
   }) {
     const headerEmoji = filePaths.length > 0 ? "✅" : "😔";
     const emoji = filePaths.length > 0 ? "🔎" : "❌";
-    this.render(
-      `Glob (${pattern}), we have found - (${filePaths.length}) ${headerEmoji}`
+    this.headerRender(
+      `Glob (**${this.headerPattern(pattern)}**) found **${
+        filePaths.length
+      }** files ${headerEmoji}`
     );
     this.renderPatternAndFileNames({ emoji, pattern, filePaths });
   }
 
   public renderInvalidCommand(examples: string[]) {
-    this.render(`Invalid use. Usage: /<cmd> ${examples.join(" ")}`);
+    this.headerRender(`Invalid use. Usage: **/<cmd> ${examples.join(" ")}**`);
   }
 
   private renderPatternAndFileNames({
@@ -77,7 +96,7 @@ export class CommandView {
     filePaths: string[];
   }) {
     if (filePaths.length === 0) {
-      this.render(`${emoji} None found...`);
+      this.render(this.genericStyle(`${emoji} None found...`));
       return;
     }
 
@@ -91,21 +110,12 @@ export class CommandView {
   private renderIgnoringCwd(input: string) {
     const cwd = process.cwd();
     const cwdRegex = new RegExp(cwd, "g");
-    const cwdMatches = input.match(cwdRegex);
-    if (cwdMatches) {
-      const cwdMatch = cwdMatches[0];
-      const cwdIndex = input.indexOf(cwdMatch);
-      const cwdLength = cwdMatch.length;
-      const cwdEndIndex = cwdIndex + cwdLength;
-      const cwdStart = input.slice(0, cwdIndex);
-      const cwdEnd = input.slice(cwdEndIndex);
-      const cwd = input.slice(cwdIndex, cwdEndIndex);
-      const cwdColor = chalk.hex("#61afef").bold(cwd);
-      const cwdIgnored = chalk.hex("#abb2bf").bold(cwdStart + cwdEnd);
-      process.stdout.write(cwdIgnored + "\n");
+
+    if (cwdRegex.test(input)) {
+      const simplifiedInput = input.replace(cwdRegex, ".");
+      this.render(chalk.hex("#abb2bf").bold(simplifiedInput));
     } else {
-      chalkRender(input);
-      process.stdout.write("\n");
+      this.render(this.genericStyle(input));
     }
   }
 }

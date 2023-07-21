@@ -8,7 +8,6 @@ import { ApplicationView } from "../views/ApplicationView";
 import { MultilineController } from "./MultilineController";
 import { StateController } from "./StateController";
 import { art7 } from "../utils/art";
-import { chalkString } from "../utils/chalk-util";
 
 export class ApplicationController {
   private applicationView: ApplicationView = new ApplicationView();
@@ -112,14 +111,14 @@ export class ApplicationController {
     const name = this.stateController.getSaveName();
     const bracketedName = chalk.gray(`(${name})`);
     const promptStr = chalk.gray`${
-      this.stateController.getSaveName() ? `${bracketedName}` : ">>"
+      this.stateController.getSaveName() ? `${bracketedName}` : "##"
     }`;
     // const promptStr = `${name}> `;
     return promptStr + (name ? chalk.white : chalk.gray)`> `;
   }
 
   private multilinePrompt(): string {
-    return chalk.blue(`(${this.multilineController.delimiter})📝 `);
+    return "";
   }
 }
 

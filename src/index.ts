@@ -27,7 +27,7 @@ program
       await writeSensibleDefaultsToEnv({ envFile, apiKey });
     }
 
-    dotenv.config({ path: envFile }); // wsl/linux
+    dotenv.config({ path: envFile });
 
     const app = new ApplicationController(filePaths);
     app.run();

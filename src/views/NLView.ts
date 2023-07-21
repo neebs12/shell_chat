@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import { chalkRender, type color } from "../utils/chalk-util";
 import { mdLineStr } from "../utils/marked-utils";
+import { processCenterMessage } from "../utils/art";
 
 // token-specific rendering
 export class NLView {
@@ -38,6 +39,15 @@ export class NLMDView {
   public nlView = new NLView();
   public isCodeBlock: boolean = false;
   public buffer: string[] = [];
+
+  public handleStartCB() {
+    const str = processCenterMessage(
+      // [{ content: "## sent ##", styler: chalk.gray.bold }],
+      [],
+      { content: "#", styler: chalk.dim.gray }
+    );
+    process.stdout.write(chalk.italic(str + "\n"));
+  }
 
   public handleStreamCB(token: string) {
     const subTokenArry = token.split("\n");
@@ -81,7 +91,7 @@ export class NLMDView {
     }
   }
 
-  public handleEndCB() {
+  public handleEndCB(tokensUsed: number) {
     const bufferStr = this.buffer.join("");
     if (this.isCodeBlock || bufferStr === "```") {
       this.renderLineNLMDAsCodeBlock(bufferStr);
@@ -90,12 +100,29 @@ export class NLMDView {
     }
     this.buffer = [];
     this.isCodeBlock = false;
-    this.nlView.renderBgGrayColunm();
+    // this.nlView.renderBgGrayColunm();
+    const str = processCenterMessage(
+      [
+        // { content: "###", styler: chalk.gray }, // doesnt make a difference
+        { content: "##", styler: chalk.bold.gray },
+        { content: ` ${tokensUsed.toString()}`, styler: chalk.gray.bold },
+        { content: " tokens ", styler: chalk.gray.bold },
+        { content: "##", styler: chalk.bold.gray },
+        // { content: "###", styler: chalk.gray },
+      ],
+      { content: "#", styler: chalk.dim.gray }
+    );
+    process.stdout.write(chalk.italic(str + "\n"));
   }
 
   public renderLineNLMDAsCodeBlock(input: string) {
     input = this.postProcess(input);
-    input = chalk.gray(input);
+    if (input.startsWith("```")) {
+      input = chalk.gray("```") + chalk.bold.yellow(input.slice(3));
+    } else {
+      input = chalk.italic.gray(input);
+    }
+
     process.stdout.write(input + "\n");
   }
 

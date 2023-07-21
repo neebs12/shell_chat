@@ -97,12 +97,6 @@ export class NLController {
     const truncatedCH =
       await this.tokenController.getTruncatedConversationhistory();
 
-    console.log(
-      chalk.gray(
-        `${truncatedCH.reduce((acm, curr) => acm + curr.tokenLength, 0)}`
-      )
-    );
-
     const systemMessage = new SystemChatMessage(systemPromptString);
     const convoMessageArray = truncatedCH.map((message, ind) => {
       if (message.key === "ai") {
@@ -111,7 +105,7 @@ export class NLController {
         const content =
           message.content +
           (ind === truncatedCH.length - 1
-            ? "\n\n(silent note: respond in standard markdown with italics & bolds but don't insert italics/bolds within codeblocks please)"
+            ? "\n\n(SILENT addendum: respond in standard markdown with italics & bolds but don't insert italics/bolds within codeblocks please)"
             : "");
         return new HumanChatMessage(content);
       }
@@ -128,14 +122,18 @@ export class NLController {
 
     let debugBuffer: string[] = [];
 
-    const startCB = async () => {};
+    const startCB = async () => {
+      this.nlmdView.handleStartCB();
+    };
     const streamCB = async (token: string) => {
       debugBuffer.push(token);
       this.nlmdView.handleStreamCB(token);
     };
 
     const endCB = async () => {
-      this.nlmdView.handleEndCB();
+      const delayedNum = await this.tokenController.getTokensUsedBySPCH();
+      const actualNum = delayedNum + debugBuffer.length;
+      this.nlmdView.handleEndCB(actualNum);
       // console.log("--------------"); // check MD output
       // this.nlView.render(debugBuffer.join("|"));
     };

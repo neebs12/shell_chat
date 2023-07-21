@@ -1,13 +1,29 @@
 import chalk from "chalk";
-
+import { Art } from "../utils/art";
 export class MultilineView {
-  public renderStartHeredocMode() {
-    const str = chalk.dim.gray("Heredoc mode ...");
-    process.stdout.write(str + "\n");
+  private genericStyle = chalk.cyan;
+  private highlightStyle = chalk.redBright.bold;
+  private av = new Art(this.genericStyle, this.highlightStyle);
+
+  public render(input: string) {
+    process.stdout.write(input);
+    process.stdout.write("\n");
   }
 
-  public renderEndHeredocMode() {
-    const str = chalk.dim.gray("Heredoc mode deactivated...");
-    process.stdout.write(str + "\n");
+  public headerRender(input: string) {
+    const str = this.av.createMessage(input);
+    this.render(chalk.italic(str));
+  }
+
+  public renderStartHeredocMode(delimeter: string) {
+    this.headerRender(
+      `Multiline Mode Started: enter **${delimeter}** to submit`
+    );
+  }
+
+  public renderEndHeredocMode(delimeter: string) {
+    this.headerRender(
+      `Multiline Mode Ended: detected **${delimeter}**, now submitting`
+    );
   }
 }

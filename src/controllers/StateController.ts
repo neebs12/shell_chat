@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import chalk from "chalk";
 import { StateView } from "../views/StateView";
 import { type Message } from "../types";
 
@@ -76,6 +77,11 @@ export class StateController {
 
   public async renameCurrentState(newName: string): Promise<void> {
     if (this.saveFile[this.saveName]) {
+      if (this.saveName === newName) {
+        this.stateView.conversationCannotRenameToSameName(newName);
+        return;
+      }
+
       this.saveFile[newName] = this.saveFile[this.saveName];
       delete this.saveFile[this.saveName];
       await fs.promises.writeFile(
@@ -85,7 +91,7 @@ export class StateController {
       this.stateView.conversationStateRenamed(this.saveName, newName);
       this.saveName = newName;
     } else {
-      this.stateView.render(`You are currently not in a saved state...`);
+      this.stateView.headerRender("Save first prior to renaming");
     }
   }
 
@@ -147,13 +153,17 @@ export class StateController {
     );
     this.saveName = saveName;
     await callback();
-    this.stateView.render(`Created new state "${saveName}"...`);
+    this.stateView.headerRender(
+      `Current conversation saved to **${saveName}**`
+    );
   }
 
   public async deleteState(saveName: string): Promise<void> {
     // cannot delete the current state
     if (this.saveName === saveName) {
-      this.stateView.render(`Cannot delete the current state "${saveName}"...`);
+      this.stateView.headerRender(
+        `Cannot delete the current state **${saveName}**`
+      );
       return;
     }
 
@@ -261,15 +271,15 @@ export class StateController {
     // keep this in commandcontroller
     // cannot load the cache (for ungodly amounts of simplicity)
     if (loadName === "cache") {
-      this.stateView.render(
-        `The "cache" cannot be specifically loaded - sorry 🙇`
+      this.stateView.headerRender(
+        "Cannot specifically load the **cache** - sorry 🙇"
       );
       return;
     }
 
     const savedNames = await this.getSavedStateNames();
     if (!savedNames.includes(loadName)) {
-      this.stateView.render(`The save ${loadName} does not exist`);
+      this.stateView.conversationStateLoadDoesNotExist(loadName);
       return;
     }
 
@@ -305,16 +315,17 @@ export class StateController {
     trackedFiles,
   }: NewStateInterface): Promise<void> {
     if (newStateName === "cache") {
-      this.stateView.render(
-        `The "cache" cannot be specifically created - sorry 🙇`
+      this.stateView.headerRender(
+        "Cannot specifically save the **cache** - sorry 🙇"
       );
       return;
     }
 
     const savedNames = await this.getSavedStateNames();
     if (savedNames.includes(newStateName)) {
-      this.stateView.render(`The state ${newStateName} already exists`);
-      return;
+      this.stateView.headerRender(
+        `Cannot create new state **${newStateName}** - already exists`
+      );
     }
 
     const currSaveName = this.getSaveName();

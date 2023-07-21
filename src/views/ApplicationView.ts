@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import { chalkRender, color } from "../utils/chalk-util";
 
 export class ApplicationView {
   public render(input: string) {

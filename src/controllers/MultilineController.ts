@@ -84,15 +84,17 @@ export class MultilineController {
     if (input.slice(0, 2) === "<<" && !this.mode) {
       // Case: starting mode
       const delimeter = input.split(" ")[0].slice(2);
+      const DEFAULT_DELIMETER = "eof";
       delimeter.length === 0
-        ? this.initialize(input, "eof")
+        ? this.initialize(input, DEFAULT_DELIMETER)
         : this.initialize(input);
-      this._multilineView.renderStartHeredocMode();
-      // rl.setPrompt(chalkString(`(${this.delimiter})📝 `, "lightBlue"));
+      this._multilineView.renderStartHeredocMode(
+        delimeter || DEFAULT_DELIMETER
+      );
     } else if (input === this.delimiter && this.mode) {
       // Case: ending mode
       this.setMode(false);
-      // rl.setPrompt(">>> ");
+      this._multilineView.renderEndHeredocMode(this.delimiter);
     } else if (this.mode) {
       this.addToBuffer(input);
 

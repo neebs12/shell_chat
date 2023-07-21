@@ -105,6 +105,17 @@ export class TokenController {
     return condition;
   }
 
+  public async getTokensUsedBySPCH(): Promise<number> {
+    const spComponentsWithTL = await this.spTLManager.getSPComponentsTL();
+    const chComponentsWithTL = await this.chTLManager.getCHComponentsTL();
+
+    // SP + CH
+    return (
+      spComponentsWithTL.completeInstructionTokenLength +
+      chComponentsWithTL.conversationHistoryTokenLength
+    );
+  }
+
   private async getTotalTokensUsed(): Promise<number> {
     const spComponentsWithTL = await this.spTLManager.getSPComponentsTL();
 

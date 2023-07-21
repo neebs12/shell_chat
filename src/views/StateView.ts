@@ -1,77 +1,97 @@
 import chalk from "chalk";
+import { Art } from "../utils/art";
 
 export class StateView {
+  private genericStyle = chalk.green;
+  private highlightStyle = chalk.redBright.bold;
+  private av = new Art(this.genericStyle, this.highlightStyle);
+
   public render(input: string) {
-    process.stdout.write(chalk.green(input));
+    process.stdout.write(input);
     process.stdout.write("\n");
   }
 
+  public headerRender(input: string) {
+    const str = this.av.createMessage(input);
+    this.render(str);
+  }
+
   public conversationStateRenamed(oldName: string, newName: string): void {
-    this.render(
-      `Current conversation state "${oldName}" renamed to "${newName}"...`
+    this.headerRender(
+      `Current conversation state **${oldName}** renamed to **${newName}**`
     );
   }
 
+  public conversationCannotRenameToSameName(newName: string): void {
+    this.headerRender(`Cannot rename to the same name **${newName}**`);
+  }
+
   public conversationStateSaved(saveName: string): void {
-    this.render(`Conversation state "${saveName}" saved...`);
+    this.headerRender(`Conversation state **${saveName}** saved`);
+  }
+
+  public conversationStateLoadDoesNotExist(saveName: string): void {
+    this.headerRender(`Conversation state **${saveName}** does not exist`);
   }
 
   public conversationStateLoaded(saveName: string): void {
-    this.render(`Conversation state loaded from "${saveName}..."`);
+    this.headerRender(`Conversation state loaded from **${saveName}**`);
   }
 
   public conversationStateDeleted(saveName: string): void {
-    this.render(`Conversation state "${saveName}" deleted...`);
+    this.headerRender(`Conversation state **${saveName}** deleted`);
   }
 
   public noSaveFound(saveName: string): void {
-    this.render(`No save found with the name "${saveName}..."`);
+    this.headerRender(`No save found with the name **${saveName}**`);
   }
 
   public savedConversationStatesList(saveNames: string[]): void {
     if (saveNames.length > 0) {
-      this.render("Saved conversation states:");
-      saveNames.forEach((saveName) => this.render(`- ${saveName}`));
+      this.headerRender(`Saved conversation states:`);
+      saveNames.forEach((saveName) =>
+        this.render(this.genericStyle(`- ${saveName}`))
+      );
     } else {
-      this.render("No conversation states saved...");
+      this.headerRender(`No conversation states saved`);
     }
   }
 
   public renderSaveOverwrite(saveName: string) {
-    this.render(
-      `Save "${saveName}" already exists. Use /save-overwrite or /so ${saveName} to overwrite...`
+    this.headerRender(
+      `Save **${saveName}** already exists. Overwrite with **/so ${saveName}**`
     );
   }
 
   public renderNoSaveName(): void {
-    this.render("No save name provided and no save name currently set...");
+    this.headerRender("No save name provided and no save name currently set");
   }
 
   public renderSuccessCacheMove(saveName: string) {
-    this.render(`Successfully saved cache to "${saveName}", cache is reset...`);
+    this.headerRender(`Saved cache to **${saveName}**, cache is reset`);
   }
 
   public renderSaveOverwriteFromCache(saveName: string) {
-    this.render(
-      `Save "${saveName}" already exists. Use /save-cache-overwrite or /sco ${saveName} to overwrite from cache...`
+    this.headerRender(
+      `Save **${saveName}** already exists. Use overwrite with **/sco ${saveName}**`
     );
   }
 
   public renderCacheDoesNotExist() {
-    this.render(`Cache does not exist...`);
+    this.headerRender("Cache does not exist");
   }
 
   public renderLoadingAlreadyCurrentState(saveName: string) {
-    this.render(`Save "${saveName}" is already loaded...`);
+    this.headerRender(`Save **${saveName}** is already loaded`);
   }
 
   public renderSavedToCacheBeforeLoad() {
-    this.render(`To save cache to a proper name, use /sc <new-name>...`);
+    this.headerRender("To properly save **cache**, use **/sc <new-name>**");
   }
 
   public allConversationStatesDeleted() {
-    this.render(
-      `All conversation states deleted. To delete a specific save, use /delete <save-name>...`
+    this.headerRender(
+      "All convos deleted, use **/delete <save-name>** to delete by name"
     );
   }
 }
