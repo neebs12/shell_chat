@@ -73,16 +73,16 @@ export class TokenView {
 
   public renderNLInputTooLargeError({
     inputTL,
-    inputReserve,
+    tokensRemaining,
   }: {
     inputTL: number;
-    inputReserve: number;
+    tokensRemaining: number;
   }) {
     this.render(
       "Natural Langauge input is too long. Please try again.",
       "lightRed"
     );
     this.render(`- Input Token Length is: ${inputTL}`, "lightRed");
-    this.render(`- Reserved Tokens for Input is: ${inputReserve}`, "lightRed");
+    this.render(`- Remaining tokens is is: ${tokensRemaining}`, "lightRed");
   }
 }

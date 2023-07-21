@@ -90,14 +90,17 @@ export class TokenController {
 
   public async isNLInputTooLarge(input: string): Promise<boolean> {
     const inputTL = await getTokenLengthByInput(input);
-    // INPUT_TL > (RESERVED_C_TL - COMPLETION_TL)
-    const inputReserve =
-      this.tokenConfig.reservedConversationTokens -
+    const tokenUsed =
+      (await this.spTLManager.getSPComponentsTL())
+        .completeInstructionTokenLength +
+      this.tokenConfig.errorCorrectionTokens +
       this.tokenConfig.maxCompletionTokens;
-    const condition = inputTL > inputReserve;
+
+    const tokensRemaining = this.tokenConfig.maxTokens - tokenUsed;
+    const condition = inputTL > tokensRemaining;
 
     if (condition)
-      this.tokenView.renderNLInputTooLargeError({ inputTL, inputReserve });
+      this.tokenView.renderNLInputTooLargeError({ inputTL, tokensRemaining });
 
     return condition;
   }
