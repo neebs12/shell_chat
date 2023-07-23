@@ -52,7 +52,7 @@ export class NLController {
       (await this.tokenController.areTheAddedFilesTooLarge()) ||
       (await this.tokenController.isNLInputTooLarge(nl))
     ) {
-      this.nlView.renderNLError("Natural Language input is ignored...");
+      this.nlView.renderNLError("Natural Language input is ignored");
       return;
     }
 

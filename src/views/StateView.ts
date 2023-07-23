@@ -49,9 +49,7 @@ export class StateView {
   public savedConversationStatesList(saveNames: string[]): void {
     if (saveNames.length > 0) {
       this.headerRender(`Saved conversation states:`);
-      saveNames.forEach((saveName) =>
-        this.render(this.genericStyle(`- ${saveName}`))
-      );
+      saveNames.forEach((saveName) => this.headerRender(`- ${saveName}`));
     } else {
       this.headerRender(`No conversation states saved`);
     }

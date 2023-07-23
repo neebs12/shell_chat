@@ -50,7 +50,7 @@ export class MultilineController {
     this._mode = false;
     this._delimiter = "";
     const nlBuffer = this._buffer.join("\n");
-    console.log({ receivedBuffer: this.buffer });
+    // console.log({ receivedBuffer: this.buffer });
     this.clearBuffer();
     return nlBuffer;
   }

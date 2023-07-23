@@ -1,7 +1,18 @@
+import chalk from "chalk";
+import { Art } from "../utils/art";
 import { chalkRender, color, chalkString } from "../utils/chalk-util";
 import { type TokenReport } from "../controllers/TokenControllerUtils/TokenReportBuilder";
 
 export class TokenView {
+  private genericStyle = chalk.blue;
+  private highlightStyle = chalk.redBright.bold;
+  private av = new Art(this.genericStyle, this.highlightStyle);
+
+  public headerRender(input: string) {
+    const str = this.av.createMessage(input);
+    this.render(str);
+  }
+
   public render(input: string, renderColor: keyof typeof color = "lightBlue") {
     chalkRender(input, renderColor);
     process.stdout.write("\n");
@@ -61,13 +72,15 @@ export class TokenView {
     this.render(output);
   }
 
-  public renderFilesTooLargeError(input?: string) {
-    this.render("File(s) too large. Please try again.", "lightRed");
-    this.render(
-      `Hint:
-- Use \`/tr\` to see files to tokens.
-- Use \`/rf\` to glob remove tracked files (to reduce token count).`,
-      "lightRed"
+  public renderFilesTooLargeError(tokenReport: TokenReport) {
+    this.headerRender(
+      `Files **exceed usage by ${
+        tokenReport.totalTokensRemaining * -1
+      }** tokens. Use:`
+    );
+    this.headerRender("- **/tr** to see tokens per file.");
+    this.headerRender(
+      "- **/rf <glob-pattern>** to remove reduce files tracked."
     );
   }
 
@@ -78,11 +91,8 @@ export class TokenView {
     inputTL: number;
     tokensRemaining: number;
   }) {
-    this.render(
-      "Natural Langauge input is too long. Please try again.",
-      "lightRed"
-    );
-    this.render(`- Input Token Length is: ${inputTL}`, "lightRed");
-    this.render(`- Remaining tokens is is: ${tokensRemaining}`, "lightRed");
+    this.headerRender("Natural Langauge input is **too long**.");
+    this.headerRender(`- Input Token Length is: **${inputTL}**`);
+    this.headerRender(`- Remaining tokens is is: **${tokensRemaining}**`);
   }
 }

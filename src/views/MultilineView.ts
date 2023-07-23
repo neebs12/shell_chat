@@ -12,7 +12,7 @@ export class MultilineView {
 
   public headerRender(input: string) {
     const str = this.av.createMessage(input);
-    this.render(chalk.italic(str));
+    this.render(str);
   }
 
   public renderStartHeredocMode(delimeter: string) {

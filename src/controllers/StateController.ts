@@ -135,7 +135,9 @@ export class StateController {
       const { conversationHistory, trackedFiles } = this.saveFile[saveName];
       // Update conversation history and tracked files in current session
       await callback(conversationHistory, trackedFiles);
+      // notifies user that loading is successful
       this.stateView.conversationStateLoaded(saveName);
+      // then render the current history of the loaded save (as per conversationHistory) and trackedFiles(?)
       this.saveName = saveName;
     } else {
       this.stateView.noSaveFound(saveName);

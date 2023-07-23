@@ -2,12 +2,17 @@ import chalk from "chalk";
 import { chalkRender, type color } from "../utils/chalk-util";
 import { mdLineStr } from "../utils/marked-utils";
 import { processCenterMessage } from "../utils/art";
+import { Art } from "../utils/art";
 
 // token-specific rendering
 export class NLView {
+  private genericStyle = chalk.blue;
+  private highlightStyle = chalk.redBright.bold;
+  private av = new Art(this.genericStyle, this.highlightStyle);
+
   public renderNLError(input: string) {
-    chalkRender(input, "lightRed");
-    process.stdout.write("\n");
+    const str = this.av.createMessage(input);
+    process.stdout.write(str + "\n");
   }
 
   public render(
@@ -36,16 +41,18 @@ export class NLView {
 
 // markdown-specific rendering
 export class NLMDView {
+  private genericStyle = chalk.gray;
+  private highlightStyle = chalk.gray.bold;
+  private av = new Art(this.genericStyle, this.highlightStyle);
   public nlView = new NLView();
   public isCodeBlock: boolean = false;
   public buffer: string[] = [];
 
   public handleStartCB() {
-    const str = processCenterMessage(
-      // [{ content: "## sent ##", styler: chalk.gray.bold }],
-      [],
-      { content: "#", styler: chalk.dim.gray }
-    );
+    const str = processCenterMessage([], {
+      content: "#",
+      styler: chalk.dim.gray,
+    });
     process.stdout.write(chalk.italic(str + "\n"));
   }
 
@@ -100,19 +107,20 @@ export class NLMDView {
     }
     this.buffer = [];
     this.isCodeBlock = false;
-    // this.nlView.renderBgGrayColunm();
-    const str = processCenterMessage(
-      [
-        // { content: "###", styler: chalk.gray }, // doesnt make a difference
-        { content: "##", styler: chalk.bold.gray },
-        { content: ` ${tokensUsed.toString()}`, styler: chalk.gray.bold },
-        { content: " tokens ", styler: chalk.gray.bold },
-        { content: "##", styler: chalk.bold.gray },
-        // { content: "###", styler: chalk.gray },
-      ],
-      { content: "#", styler: chalk.dim.gray }
+    // better than av.createMessage
+    const str = chalk.italic(
+      processCenterMessage(
+        [
+          { content: "##", styler: chalk.bold.gray },
+          { content: ` ${tokensUsed.toString()}`, styler: chalk.gray.bold },
+          { content: " tokens ", styler: chalk.gray.bold },
+          { content: "##", styler: chalk.bold.gray },
+        ],
+        { content: "#", styler: chalk.dim.gray }
+      )
     );
-    process.stdout.write(chalk.italic(str + "\n"));
+    // const str = this.av.createMessage(`${tokensUsed.toString()} tokens`);
+    process.stdout.write(str + "\n");
   }
 
   public renderLineNLMDAsCodeBlock(input: string) {

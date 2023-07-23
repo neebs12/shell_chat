@@ -38,7 +38,7 @@ export class ApplicationController {
   }
 
   public run(): void {
-    this.applicationView.render(art7);
+    this.applicationView.genericRender(art7);
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
@@ -98,12 +98,12 @@ export class ApplicationController {
         trackedFiles: await this.systemPromptController.getFilePaths(),
       });
     } else {
-      this.applicationView.render(
-        `State unavailable, current save discarded...`
+      this.applicationView.headerRender(
+        "State unavailable, current save discarded"
       );
     }
 
-    this.applicationView.render("Exiting the program...");
+    this.applicationView.headerRender("Exiting the program");
     process.exit(0);
   }
 

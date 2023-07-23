@@ -4,7 +4,10 @@ import { ConversationHistoryController } from "./ConversationHistoryController";
 import { SPComponentsTLManager } from "./TokenControllerUtils/SPComponentsManager";
 import { FPComponentsTLManager } from "./TokenControllerUtils/FPComponentsManager";
 import { CHComponentsTLManager } from "./TokenControllerUtils/CHComponentsManager";
-import { TokenReportBuilder } from "./TokenControllerUtils/TokenReportBuilder";
+import {
+  TokenReportBuilder,
+  type TokenReport,
+} from "./TokenControllerUtils/TokenReportBuilder";
 import { TokenView } from "../views/TokenView";
 
 import { getTokenLengthByInput } from "../utils/tiktoken-instance";
@@ -32,24 +35,7 @@ export class TokenController {
   }
 
   public async handleTokenReport(render: boolean = true): Promise<void> {
-    const spComponentsWithTL = await this.spTLManager.getSPComponentsTL();
-
-    const fpComponentsWithTL =
-      await this.fpTLManager.getFPComponentsWithTLTotalAllFiles();
-
-    const chComponentsWithTL = await this.chTLManager.getCHComponentsTL();
-
-    const totalTokensUsed = await this.getTotalTokensUsed();
-
-    const tokenReportBuilder = new TokenReportBuilder(
-      totalTokensUsed,
-      this.tokenConfig,
-      spComponentsWithTL,
-      fpComponentsWithTL,
-      chComponentsWithTL
-    );
-
-    const tokenReport = await tokenReportBuilder.build();
+    const tokenReport = await this.configureTokenReport();
     render && this.tokenView.renderTokenReport(tokenReport);
   }
 
@@ -83,7 +69,10 @@ export class TokenController {
     const condition =
       (await this.getTotalTokensUsed()) > this.tokenConfig.maxTokens;
 
-    if (condition) this.tokenView.renderFilesTooLargeError();
+    if (condition)
+      this.tokenView.renderFilesTooLargeError(
+        await this.configureTokenReport()
+      );
 
     return condition;
   }
@@ -125,5 +114,27 @@ export class TokenController {
       this.tokenConfig.reservedConversationTokens +
       this.tokenConfig.errorCorrectionTokens
     );
+  }
+
+  private async configureTokenReport(): Promise<TokenReport> {
+    const spComponentsWithTL = await this.spTLManager.getSPComponentsTL();
+
+    const fpComponentsWithTL =
+      await this.fpTLManager.getFPComponentsWithTLTotalAllFiles();
+
+    const chComponentsWithTL = await this.chTLManager.getCHComponentsTL();
+
+    const totalTokensUsed = await this.getTotalTokensUsed();
+
+    const tokenReportBuilder = new TokenReportBuilder(
+      totalTokensUsed,
+      this.tokenConfig,
+      spComponentsWithTL,
+      fpComponentsWithTL,
+      chComponentsWithTL
+    );
+
+    const tokenReport = await tokenReportBuilder.build();
+    return tokenReport;
   }
 }

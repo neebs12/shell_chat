@@ -8,9 +8,9 @@ export const processCenterMessage = (
 ): string => {
   let msg = componentsArray.map((component) => component.content).join("");
   const consoleWidth = process.stdout.columns || fallbackConsoleWidth;
-  let leftPadding = Math.floor((consoleWidth - msg.length) / 2);
+  let paddingLen = Math.floor((consoleWidth - msg.length) / 2);
 
-  const paddingString = Array(leftPadding).join(paddingChar.content);
+  const paddingString = Array(paddingLen).join(paddingChar.content);
   const styledMsg = componentsArray
     .map((component) => component.styler(component.content))
     .join("");
@@ -26,6 +26,34 @@ export const processCenterMessage = (
       : paddedMsg + paddingChar.styler(paddingChar.content);
 
   return finalMsg;
+};
+
+export const processLeftMessage = (
+  componentsArray: Array<{ content: string; styler: (str: string) => string }>,
+  paddingChar: { content: string; styler: (str: string) => string },
+  leftPaddingLen: number,
+  fallbackConsoleWidth: number = 80
+): string => {
+  let msg = componentsArray.map((component) => component.content).join("");
+  const consoleWidth = process.stdout.columns || fallbackConsoleWidth;
+
+  // calculate right padding length by subtracting message length and left padding from console width
+  let rightPaddingLen = Math.max(consoleWidth - leftPaddingLen - msg.length, 0);
+
+  // Use the string repeat method here
+  const leftPaddingString = paddingChar.content.repeat(leftPaddingLen);
+  // slight allowance on right padding
+  const rightPaddingString = paddingChar.content.repeat(rightPaddingLen - 1);
+
+  const styledMsg = componentsArray
+    .map((component) => component.styler(component.content))
+    .join("");
+  const paddedMsg =
+    paddingChar.styler(leftPaddingString) +
+    styledMsg +
+    paddingChar.styler(rightPaddingString);
+
+  return paddedMsg;
 };
 
 export class Art {
@@ -52,15 +80,17 @@ export class Art {
     }>
   ) {
     // built in `#` and space
-    const str = processCenterMessage(
+    const str = processLeftMessage(
       [
-        { content: "###", styler: this.genericStyle.dim },
-        { content: "## ", styler: this.genericStyle },
+        { content: "##", styler: this.genericStyle.dim },
+        { content: "# ", styler: this.genericStyle },
         ...componentsArray,
-        { content: " ##", styler: this.genericStyle },
-        { content: "###", styler: this.genericStyle.dim },
+        { content: " ", styler: this.genericStyle },
+        // { content: " ##", styler: this.genericStyle },
+        // { content: "###", styler: this.genericStyle.dim },
       ],
-      { content: "#", styler: chalk.dim.gray }
+      { content: "#", styler: chalk.dim.gray },
+      0
     );
     return str;
   }
@@ -102,15 +132,5 @@ export class Art {
   }
 }
 
-const body = processCenterMessage(
-  [
-    { content: "###", styler: chalk.dim.cyan },
-    { content: "##", styler: chalk.cyan },
-    { content: " SHELL CHAT ", styler: chalk.redBright.bold },
-    { content: "##", styler: chalk.cyan },
-    { content: "###", styler: chalk.dim.cyan },
-  ],
-  { content: "#", styler: chalk.dim.gray }
-);
-
-export const art7 = `${body}`;
+const art = new Art(chalk.cyan, chalk.redBright.bold);
+export const art7 = `${art.createMessage("**SHELL CHAT**")}}`;
