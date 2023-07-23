@@ -54,7 +54,7 @@ export class ApplicationController {
 
         if (this.multilineController.mode) {
           rl.setPrompt(this.multilinePrompt());
-          return rl.prompt();
+          return; // returning nothing prevents rotation
         }
 
         input = processInput(input);

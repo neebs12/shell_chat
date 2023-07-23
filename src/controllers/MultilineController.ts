@@ -50,31 +50,9 @@ export class MultilineController {
     this._mode = false;
     this._delimiter = "";
     const nlBuffer = this._buffer.join("\n");
-    // console.log({ receivedBuffer: this.buffer });
+    console.log({ receivedBuffer: this.buffer });
     this.clearBuffer();
     return nlBuffer;
-  }
-
-  private timestampArray: number[] = [];
-
-  /**
-   * Calculates the delay between the last two timestamps in the timestampArray
-   * Used to delay following rl prints to prevent potential second rotation
-   * @returns {number} The delay in milliseconds
-   */
-  private calculateDelay(): number {
-    const latestTimestamp = this.timestampArray[this.timestampArray.length - 1];
-    const defaultDelay = 200; // first delay
-    const longDelay = 1500; // following delays
-    const previousTimestamp =
-      this.timestampArray[this.timestampArray.length - 2];
-    const timeDiff = latestTimestamp - previousTimestamp;
-    if (previousTimestamp !== undefined && timeDiff < defaultDelay) {
-      return longDelay; // Increase delay to 1.5s if timestamps are too close
-    } else {
-      // console.log({ timestampArray: this.timestampArray });
-      return defaultDelay; // Otherwise, use the default delay
-    }
   }
 
   public async handleMultilineInput(
@@ -97,13 +75,6 @@ export class MultilineController {
       this._multilineView.renderEndHeredocMode(this.delimiter);
     } else if (this.mode) {
       this.addToBuffer(input);
-
-      // Case: continuing mode
-      // NOTE: HACKY attempt at preventing txt rotation
-      //   at parts of buffer when user pastes large text, the longer the delay, the larger the piece of text that can be pasted in without encountering rotation. calculateDelay extends second rotation delay, but first rotation delay cannot be delayed due to logic of rendering
-      this.timestampArray.push(Date.now()); // Store the current timestamp
-      const delay = this.calculateDelay(); // Calculate the delay based on the timestamps
-      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }
