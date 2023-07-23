@@ -1,6 +1,6 @@
 {
   "name": "shell_chat",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Terminal Chat GPT",
   "main": "./build/index.js",
   "bin": {
@@ -17,6 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/marked": "^5.0.0",
+    "ansi-regex": "^5.0.1",
     "chalk": "^4.1.2",
     "commander": "^10.0.1",
     "dotenv": "^16.1.4",

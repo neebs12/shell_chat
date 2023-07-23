@@ -1,5 +1,8 @@
 import chalk from "chalk";
-import { Art } from "../utils/art";
+import { Art, processCenterMessage } from "../utils/art";
+import { mdBlockStr } from "../utils/marked-utils";
+import { Message } from "../types";
+import { stripAnsi } from "../utils/strip-ansi";
 
 export class StateView {
   private genericStyle = chalk.green;
@@ -9,6 +12,32 @@ export class StateView {
   public render(input: string) {
     process.stdout.write(input);
     process.stdout.write("\n");
+  }
+
+  public renderAppendBg(input: string) {
+    // Split input by `\n`
+    const lines = input.split("\n");
+
+    // For each line...
+    for (const line of lines) {
+      // Calculate length of line without ANSI characters
+      const noAnsiLen = stripAnsi(line).length;
+
+      // Calculate number of spaces needed to fill console width
+      const numSpaces = process.stdout.columns - noAnsiLen;
+
+      let paddedLine = line + "";
+      if (numSpaces > 0) {
+        // Append spaces to line
+        paddedLine = line + " ".repeat(numSpaces);
+      }
+
+      // Write line with no background (any background makes it all look worse lol)
+      process.stdout.write(paddedLine);
+
+      // Write newline character to start a new line
+      process.stdout.write("\n");
+    }
   }
 
   public headerRender(input: string) {
@@ -34,7 +63,22 @@ export class StateView {
     this.headerRender(`Conversation state **${saveName}** does not exist`);
   }
 
-  public conversationStateLoaded(saveName: string): void {
+  public conversationStateLoaded(saveName: string, ch: Message[]): void {
+    this.headerRender(`Conversation state loaded from **${saveName}**`);
+    ch.forEach((m) => {
+      const displayKey = processCenterMessage(
+        [{ content: m.key.toLocaleUpperCase(), styler: chalk.blue.bold }],
+        { content: "-", styler: chalk.bold.blue }
+      );
+      this.renderAppendBg(displayKey);
+      let displayContent = m.content;
+      if (m.key === "user") {
+        displayContent = chalk.gray(displayContent);
+      } else {
+        displayContent = mdBlockStr(displayContent);
+      }
+      this.renderAppendBg(displayContent);
+    });
     this.headerRender(`Conversation state loaded from **${saveName}**`);
   }
 

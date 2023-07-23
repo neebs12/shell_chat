@@ -3,22 +3,6 @@ import chalk from "chalk";
 
 const renderer = new marked.Renderer();
 
-// this is ONLY for line by line makdown rendering
-// this will look weird on NORMAL markdown mode
-// renderer.code = function (code, language, isEscaped) {
-// const spaces = `\n`;
-// const trimmedCode = code.replace(/^\\n+|\\n+$/g, "");
-// const retainFences = `\`\`\`${language}\n${trimmedCode}\n\`\`\`${"\n".repeat(
-//   2
-// )}`;
-// return chalk.gray(retainFences);
-// return chalk.gray("  " + code + "\n");
-// };
-
-renderer.code = function (code, language, isEscaped) {
-  return chalk.gray("  " + code + "\n");
-};
-
 renderer.heading = function (text, level) {
   return chalk.redBright.bold.underline(`\n${"#".repeat(level)} ${text}\n`);
 };
@@ -71,12 +55,57 @@ renderer.del = function (text) {
   return chalk.dim.strikethrough(`${text}`);
 };
 
-marked.setOptions({
-  renderer,
-  mangle: false, // prevent markdown from altering underscores
-  headerIds: false, // prevent markdown from adding id's to headers
-});
+function postProcess(input: string): string {
+  input = input.replace(/<br>/g, "\n");
+
+  const htmlDecode = (input: string) => {
+    for (const [key, value] of Object.entries({
+      "&amp;": "&",
+      "&lt;": "<",
+      "&gt;": ">",
+      "&quot;": '"',
+      "&#39;": "'",
+      // add more if needed
+    })) {
+      input = input.replace(new RegExp(key, "g"), value);
+    }
+    return input;
+  };
+
+  return htmlDecode(input);
+}
 
 export const mdLineStr = (input: string): string => {
-  return marked(input);
+  // this is ONLY for line by line makdown rendering
+  renderer.code = function (code, language, isEscaped) {
+    return chalk.gray("  " + code + "\n");
+  };
+
+  marked.setOptions({
+    renderer,
+    mangle: false, // prevent markdown from altering underscores
+    headerIds: false, // prevent markdown from adding id's to headers
+  });
+
+  return postProcess(marked(input));
+};
+
+export const mdBlockStr = (input: string): string => {
+  // this is ONLY for block makdown rendering
+  renderer.code = function (code, language, isEscaped) {
+    const spaces = `\n`;
+    const trimmedCode = code.replace(/^\\n+|\\n+$/g, "");
+    const retainFences = `\`\`\`${chalk.yellow(
+      language
+    )}\n${trimmedCode}\n\`\`\`${"\n".repeat(2)}`;
+    return chalk.gray(retainFences);
+  };
+
+  marked.setOptions({
+    renderer,
+    mangle: false, // prevent markdown from altering underscores
+    headerIds: false, // prevent markdown from adding id's to headers
+  });
+
+  return postProcess(marked(input));
 };
