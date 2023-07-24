@@ -24,20 +24,6 @@ renderer.paragraph = function (text) {
   return chalk.cyan(`${text}\n`);
 };
 
-renderer.list = function (body, ordered, start) {
-  const lines = body.trim().split("\n");
-  return lines
-    .map((line, index) => {
-      const prefix = ordered ? `${start + index}.` : "-";
-      return `${chalk.gray(prefix)} ${line}\n`;
-    })
-    .join("");
-};
-
-renderer.listitem = function (text) {
-  return chalk.cyan(text.trim());
-};
-
 renderer.hr = function () {
   return chalk.bold.gray("" + "-".repeat(3) + "\n");
 };
@@ -76,6 +62,23 @@ function postProcess(input: string): string {
 }
 
 export const mdLineStr = (input: string): string => {
+  renderer.list = function (body, ordered, start) {
+    const lines = body.trim().split("\n");
+    return lines
+      .map((line, index) => {
+        const prefix = ordered ? `${start + index}.` : "-";
+        return `${chalk.gray(prefix)} ${line}\n`;
+      })
+      .join("");
+  };
+
+  renderer.listitem = function (text, task, checked) {
+    if (task) {
+      let check = checked ? "[x]" : "[ ]";
+      return chalk.cyan(check + " " + text.trim());
+    }
+    return chalk.cyan(text.trim());
+  };
   // this is ONLY for line by line makdown rendering
   renderer.code = function (code, language, isEscaped) {
     return chalk.gray("  " + code + "\n");
@@ -91,7 +94,35 @@ export const mdLineStr = (input: string): string => {
 };
 
 export const mdBlockStr = (input: string): string => {
-  // this is ONLY for block makdown rendering
+  const UNLIKELY_SEQ = "😔😔😔";
+  const PREFIX_CHAR = chalk.gray("-");
+  const PREFIX_INDENT = "  ";
+
+  renderer.list = function (body, ordered, start) {
+    let resultArry = body.split(UNLIKELY_SEQ).filter((str) => str.length > 0);
+
+    let result = "";
+
+    let newResultArry = resultArry.map((line) => {
+      // this MUST be a list item with sub items
+      let subLine = line;
+      if (!line.startsWith(PREFIX_CHAR) && line.includes("\n")) {
+        // so, split by `\n` and join by `\n` + PREFIX_INDENT
+        subLine = line.split("\n").join("\n" + PREFIX_INDENT);
+      }
+      return subLine;
+    });
+
+    result = newResultArry.map((line) => `${PREFIX_CHAR} ${line}`).join("\n");
+
+    return "\n" + result + "\n";
+  };
+
+  renderer.listitem = function (text, task, checked) {
+    return UNLIKELY_SEQ + `${chalk.cyan(text.trim())}` + UNLIKELY_SEQ;
+  };
+
+  // special code
   renderer.code = function (code, language, isEscaped) {
     const spaces = `\n`;
     const trimmedCode = code.replace(/^\\n+|\\n+$/g, "");
