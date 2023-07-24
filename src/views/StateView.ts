@@ -9,9 +9,11 @@ export class StateView {
   private highlightStyle = chalk.redBright.bold;
   private av = new Art(this.genericStyle, this.highlightStyle);
 
-  public render(input: string) {
+  public render(input: string, withNewline: boolean = true) {
     process.stdout.write(input);
-    process.stdout.write("\n");
+    if (withNewline) {
+      process.stdout.write("\n");
+    }
   }
 
   public renderAppendBg(input: string) {
@@ -64,22 +66,51 @@ export class StateView {
   }
 
   public conversationStateLoaded(saveName: string, ch: Message[]): void {
-    this.headerRender(`Conversation state loaded from **${saveName}**`);
-    ch.forEach((m) => {
+    if (ch.length === 0) {
+      this.headerRender(
+        `Conversation state **${saveName}** loaded, with **no history** found`
+      );
+      return;
+    }
+    this.headerRender(`Loading **${saveName}** conversation history ⌛`);
+    ch.forEach((m, ind) => {
       const displayKey = processCenterMessage(
-        [{ content: m.key.toLocaleUpperCase(), styler: chalk.blue.bold }],
+        [
+          { content: "--", styler: chalk.dim.blue },
+          {
+            content: `${m.key === "user" ? "👋" : "🤖"}::`,
+            styler: chalk.blue.bold,
+          },
+          { content: `${Math.floor(ind / 2)}::`, styler: chalk.blue },
+          { content: `${saveName}`, styler: chalk.gray.italic },
+          { content: "--", styler: chalk.dim.blue },
+        ],
         { content: "-", styler: chalk.bold.blue }
       );
-      this.renderAppendBg(displayKey);
+      this.render(displayKey);
       let displayContent = m.content;
       if (m.key === "user") {
         displayContent = chalk.gray(displayContent);
       } else {
         displayContent = mdBlockStr(displayContent);
       }
-      this.renderAppendBg(displayContent);
+      this.render(displayContent, ind !== ch.length - 1);
     });
-    this.headerRender(`Conversation state loaded from **${saveName}**`);
+    this.render(
+      processCenterMessage(
+        [
+          { content: "--", styler: chalk.dim.blue },
+          {
+            content: `👋 END 🤖`,
+            styler: chalk.blue.bold,
+          },
+
+          { content: "--", styler: chalk.dim.blue },
+        ],
+        { content: "-", styler: chalk.bold.blue }
+      )
+    );
+    this.headerRender(`Conversation history: **${saveName}** loaded 📝`);
   }
 
   public conversationStateDeleted(saveName: string): void {
