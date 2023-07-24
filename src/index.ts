@@ -2,6 +2,7 @@ import * as readlineSync from "readline-sync";
 import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
+import { Configuration, OpenAIApi } from "openai";
 import { Command } from "commander";
 import { ApplicationController } from "./controllers/ApplicationController";
 
@@ -40,8 +41,21 @@ async function getAPIKey(): Promise<string> {
   let isApiKeyValid: boolean = false;
 
   const validateAPIKey = async (apiKey: string): Promise<boolean> => {
-    // TODO: Complete actual validation
-    return apiKey.length > 0;
+    if (apiKey.length === 0) {
+      return false;
+    }
+
+    const configuration = new Configuration({
+      apiKey: apiKey,
+    });
+    const openai = new OpenAIApi(configuration);
+
+    try {
+      await openai.listModels();
+      return true;
+    } catch (e) {
+      return false;
+    }
   };
 
   while (!isApiKeyValid) {
