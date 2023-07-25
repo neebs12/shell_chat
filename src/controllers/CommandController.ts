@@ -12,6 +12,7 @@ type CommandControllerDependencies = {
   systemPromptController: SystemPromptController;
   conversationHistoryController: ConversationHistoryController;
   stateController: StateController;
+  tokenController: TokenController;
 };
 
 type FilePathsByPattern = {
@@ -58,6 +59,8 @@ export class CommandController {
     "/ls",
     "/token-report", // all token breakdown
     "/tr",
+    "/token-limit", // token limit to conversations
+    "/tl",
     "/token-files", // token remaining + file breakdown only
     "/tf",
     "/verbose",
@@ -76,14 +79,12 @@ export class CommandController {
     systemPromptController,
     conversationHistoryController,
     stateController,
+    tokenController,
   }: CommandControllerDependencies) {
     this.systemPromptController = systemPromptController;
     this.conversationHistoryController = conversationHistoryController;
     this.stateController = stateController;
-    this.tokenController = new TokenController({
-      systemPromptController,
-      conversationHistoryController,
-    });
+    this.tokenController = tokenController;
   }
 
   public isCommandAvailable(command: string): boolean {
@@ -135,6 +136,8 @@ export class CommandController {
       await this.handleRename(cmdArry);
     } else if (incl("/list-saves", "/ls")) {
       await this.stateController.listSavedStates();
+    } else if (incl("/token-limit", "/tl")) {
+      await this.handleTokenLimit(cmdArry);
     } else if (incl("/cwd", "/pwd")) {
       // NOTE: This is for debugging purposes only
       await this.commandView.render(
@@ -157,6 +160,7 @@ export class CommandController {
     const newStateCallback = async (): Promise<void> => {
       await this.conversationHistoryController.resetConversationHistory();
       await this.systemPromptController.removeAllFilePaths();
+      await this.tokenController.resetConversationLimit();
     };
 
     await this.stateController.newStateInterface({
@@ -165,6 +169,7 @@ export class CommandController {
       conversationHistory:
         await this.conversationHistoryController.getConversationHistory(),
       trackedFiles: await this.systemPromptController.getFilePaths(),
+      limit: await this.tokenController.getConversationLimit(),
     });
   }
 
@@ -186,6 +191,7 @@ export class CommandController {
       conversationHistory:
         await this.conversationHistoryController.getConversationHistory(),
       trackedFiles: await this.systemPromptController.getFilePaths(),
+      limit: await this.tokenController.getConversationLimit(),
     });
   }
 
@@ -202,6 +208,7 @@ export class CommandController {
       conversationHistory:
         await this.conversationHistoryController.getConversationHistory(),
       trackedFiles: await this.systemPromptController.getFilePaths(),
+      limit: await this.tokenController.getConversationLimit(),
     });
   }
 
@@ -240,7 +247,8 @@ export class CommandController {
 
     const loadStateCallback = async (
       conversationHistory: Message[],
-      trackedFiles: string[]
+      trackedFiles: string[],
+      limit: number
     ): Promise<void> => {
       await this.conversationHistoryController.resetConversationHistory();
       await this.systemPromptController.removeAllFilePaths();
@@ -248,14 +256,17 @@ export class CommandController {
         conversationHistory
       );
       await this.systemPromptController.addFilePaths(trackedFiles);
+      await this.tokenController.setConversationLimit(limit);
     };
 
+    // load state interface needs
     await this.stateController.loadStateInterface({
       loadName,
       loadStateCallback,
       conversationHistory:
         await this.conversationHistoryController.getConversationHistory(),
       trackedFiles: await this.systemPromptController.getFilePaths(),
+      limit: await this.tokenController.getConversationLimit(),
     });
   }
 
@@ -370,6 +381,15 @@ export class CommandController {
   private async handleTokenReport(render: boolean = true): Promise<void> {
     await this.tokenController.handleTokenReport(render);
     // render && this.commandView.renderTokenReport(tokenReport);
+  }
+
+  private async handleTokenLimit(cmdArry: string[]): Promise<void> {
+    // const tokenLimit = await this.tokenController.getTokenLimit();
+    if (cmdArry.length !== 2) {
+      this.commandView.renderInvalidCommand(["<number>"]);
+      return;
+    }
+    this.tokenController.handleSetConversationLimit(cmdArry[1]);
   }
 
   private async handleTokenFiles(render: boolean = true): Promise<void> {

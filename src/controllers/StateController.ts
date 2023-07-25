@@ -7,6 +7,7 @@ import { type Message } from "../types";
 type SaveData = {
   conversationHistory: Message[];
   trackedFiles: string[];
+  limit: number;
 };
 
 type SaveFile = {
@@ -15,7 +16,8 @@ type SaveFile = {
 
 type LoadConversationCallback = (
   conversationHistory: Message[],
-  trackedFiles: string[]
+  trackedFiles: string[],
+  limit: number
 ) => Promise<void>;
 
 type NewStateCallback = () => Promise<void>;
@@ -24,6 +26,7 @@ type SaveStateParams = {
   saveName: string;
   conversationHistory: Message[];
   trackedFiles: string[];
+  limit: number;
 };
 
 const STATE_FILE = path.join(
@@ -37,6 +40,7 @@ type SaveStateInterfaceParams = {
   overwrite: boolean;
   conversationHistory: Message[];
   trackedFiles: string[];
+  limit: number;
 };
 
 type MoveCacheToSaveInterfaceParams = {
@@ -116,8 +120,9 @@ export class StateController {
     saveName,
     conversationHistory,
     trackedFiles,
+    limit,
   }: SaveStateParams): Promise<void> {
-    this.saveFile[saveName] = { conversationHistory, trackedFiles };
+    this.saveFile[saveName] = { conversationHistory, trackedFiles, limit };
     await fs.promises.writeFile(
       STATE_FILE,
       JSON.stringify(this.saveFile, null, 2)
@@ -132,9 +137,10 @@ export class StateController {
   ): Promise<void> {
     if (this.saveFile[saveName]) {
       // Save name exists, load conversation history and tracked files
-      const { conversationHistory, trackedFiles } = this.saveFile[saveName];
+      const { conversationHistory, trackedFiles, limit } =
+        this.saveFile[saveName];
       // Update conversation history and tracked files in current session
-      await callback(conversationHistory, trackedFiles);
+      await callback(conversationHistory, trackedFiles, limit);
       // notifies user that loading is successful
       this.stateView.conversationStateLoaded(saveName, conversationHistory);
       // then render the current history of the loaded save (as per conversationHistory) and trackedFiles(?)
@@ -148,7 +154,11 @@ export class StateController {
     saveName: string,
     callback: NewStateCallback
   ): Promise<void> {
-    this.saveFile[saveName] = { conversationHistory: [], trackedFiles: [] };
+    this.saveFile[saveName] = {
+      conversationHistory: [],
+      trackedFiles: [],
+      limit: 1000000, // 1 mil token upperlimit
+    };
     await fs.promises.writeFile(
       STATE_FILE,
       JSON.stringify(this.saveFile, null, 2)
@@ -215,6 +225,7 @@ export class StateController {
     overwrite = false,
     conversationHistory,
     trackedFiles,
+    limit,
   }: SaveStateInterfaceParams): Promise<void> {
     const saveNames = await this.getSavedStateNames();
     const isNameTaken = saveName && saveNames.includes(saveName);
@@ -240,6 +251,7 @@ export class StateController {
       saveName,
       conversationHistory,
       trackedFiles,
+      limit,
     });
   }
 
@@ -269,6 +281,7 @@ export class StateController {
     loadStateCallback,
     conversationHistory,
     trackedFiles,
+    limit,
   }: LoadStateInterface): Promise<void> {
     // keep this in commandcontroller
     // cannot load the cache (for ungodly amounts of simplicity)
@@ -297,12 +310,14 @@ export class StateController {
         saveName: currSaveName,
         conversationHistory,
         trackedFiles,
+        limit,
       });
     } else {
       await this.saveState({
         saveName: "cache",
         conversationHistory,
         trackedFiles,
+        limit,
       });
       this.stateView.renderSavedToCacheBeforeLoad();
     }
@@ -315,6 +330,7 @@ export class StateController {
     newStateCallback,
     conversationHistory,
     trackedFiles,
+    limit,
   }: NewStateInterface): Promise<void> {
     if (newStateName === "cache") {
       this.stateView.headerRender(
@@ -336,12 +352,14 @@ export class StateController {
         saveName: currSaveName,
         conversationHistory,
         trackedFiles,
+        limit,
       });
     } else {
       await this.saveState({
         saveName: "cache",
         conversationHistory,
         trackedFiles,
+        limit,
       });
       this.stateView.renderSavedToCacheBeforeLoad();
     }

@@ -18,7 +18,10 @@ type TokenControllerDependencies = {
   conversationHistoryController: ConversationHistoryController;
 };
 
+const DEFAULT_LIMIT = 1000000;
+
 export class TokenController {
+  private conversationTLimit: number = DEFAULT_LIMIT;
   private spTLManager: SPComponentsTLManager;
   private fpTLManager: FPComponentsTLManager;
   private chTLManager: CHComponentsTLManager;
@@ -55,7 +58,13 @@ export class TokenController {
     let currCHTokens = await CHComponentsTLManager.calculateTLForCH(
       truncatedCHArry
     );
-    while (currCHTokens > Math.abs(tokensRemaining)) {
+
+    const controllingLimit = Math.min(
+      this.conversationTLimit,
+      Math.abs(tokensRemaining)
+    );
+
+    while (currCHTokens > controllingLimit) {
       truncatedCHArry = truncatedCHArry.slice(1);
       currCHTokens = await CHComponentsTLManager.calculateTLForCH(
         truncatedCHArry
@@ -86,23 +95,32 @@ export class TokenController {
       this.tokenConfig.maxCompletionTokens;
 
     const tokensRemaining = this.tokenConfig.maxTokens - tokenUsed;
-    const condition = inputTL > tokensRemaining;
+    const tokenRemainingCondition = inputTL > tokensRemaining;
+    const tokenRemainingConditionWithLimit = inputTL > this.conversationTLimit;
 
-    if (condition)
+    if (tokenRemainingCondition) {
       this.tokenView.renderNLInputTooLargeError({ inputTL, tokensRemaining });
+    } else if (tokenRemainingConditionWithLimit) {
+      this.tokenView.headerRender(`The input is **${inputTL}** tokens long`);
+      this.tokenView.headerRender(
+        `Use **/tl <number>** to increase the current conversation token limit of **${this.conversationTLimit}**`
+      );
+    }
 
-    return condition;
+    return tokenRemainingCondition;
   }
 
   public async getTokensUsedBySPCH(): Promise<number> {
     const spComponentsWithTL = await this.spTLManager.getSPComponentsTL();
-    const chComponentsWithTL = await this.chTLManager.getCHComponentsTL();
+    // We dont want the whole history, we want what is being used in the truncation
+    // const chComponentsWithTL = await this.chTLManager.getCHComponentsTL();
+    const truncatedCHArry = await this.getTruncatedConversationhistory();
+    const chTruncatedTL = await CHComponentsTLManager.calculateTLForCH(
+      truncatedCHArry
+    );
 
     // SP + CH
-    return (
-      spComponentsWithTL.completeInstructionTokenLength +
-      chComponentsWithTL.conversationHistoryTokenLength
-    );
+    return spComponentsWithTL.completeInstructionTokenLength + chTruncatedTL;
   }
 
   private async getTotalTokensUsed(): Promise<number> {
@@ -136,5 +154,39 @@ export class TokenController {
 
     const tokenReport = await tokenReportBuilder.build();
     return tokenReport;
+  }
+
+  public async handleSetConversationLimit(value: string) {
+    let numValue = Number(value);
+    if (!Number.isInteger(numValue)) {
+      this.tokenView.headerRender(`Input **${numValue}** is not an integer`);
+    } else if (numValue < 0) {
+      this.tokenView.headerRender(
+        `Input **${numValue}** is not a **positive** integer`
+      );
+    } else {
+      this.setConversationLimit(numValue);
+      if (this.getConversationLimit() === DEFAULT_LIMIT) {
+        this.tokenView.headerRender(
+          `Conversation token limit is set to **${numValue}** 👍`
+        );
+      } else {
+        this.tokenView.headerRender(
+          `Conversation token limit is set from **${this.getConversationLimit()}** to **${numValue}** 👍`
+        );
+      }
+    }
+  }
+
+  public getConversationLimit(): number {
+    return this.conversationTLimit;
+  }
+
+  public setConversationLimit(value: number): void {
+    this.conversationTLimit = value;
+  }
+
+  public resetConversationLimit(): void {
+    this.conversationTLimit = 1000000;
   }
 }

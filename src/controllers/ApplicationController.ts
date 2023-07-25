@@ -7,6 +7,7 @@ import { NLController } from "./NLController";
 import { ApplicationView } from "../views/ApplicationView";
 import { MultilineController } from "./MultilineController";
 import { StateController } from "./StateController";
+import { TokenController } from "./TokenController";
 import { art7 } from "../utils/art";
 
 export class ApplicationController {
@@ -17,6 +18,7 @@ export class ApplicationController {
   private systemPromptController: SystemPromptController;
   private nlController: NLController;
   private commandController: CommandController;
+  private tokenController: TokenController;
 
   constructor(private filePaths: string[]) {
     this.filePaths = filePaths;
@@ -25,15 +27,21 @@ export class ApplicationController {
     this.conversationHistoryController = new ConversationHistoryController();
     this.systemPromptController = new SystemPromptController();
     this.stateController = new StateController();
+    this.tokenController = new TokenController({
+      systemPromptController: this.systemPromptController,
+      conversationHistoryController: this.conversationHistoryController,
+    });
     this.nlController = new NLController({
       filePaths: this.filePaths,
       conversationHistoryController: this.conversationHistoryController,
       systemPromptController: this.systemPromptController,
+      tokenController: this.tokenController,
     });
     this.commandController = new CommandController({
       conversationHistoryController: this.conversationHistoryController,
       systemPromptController: this.systemPromptController,
       stateController: this.stateController,
+      tokenController: this.tokenController,
     });
   }
 
@@ -96,6 +104,7 @@ export class ApplicationController {
         conversationHistory:
           await this.conversationHistoryController.getConversationHistory(),
         trackedFiles: await this.systemPromptController.getFilePaths(),
+        limit: this.tokenController.getConversationLimit(),
       });
     } else {
       this.applicationView.headerRender(

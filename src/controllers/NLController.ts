@@ -17,6 +17,7 @@ type NLControllerDependencies = {
   filePaths: string[];
   systemPromptController: SystemPromptController;
   conversationHistoryController: ConversationHistoryController;
+  tokenController: TokenController;
 };
 
 type StreamCallbacks = {
@@ -36,15 +37,13 @@ export class NLController {
     filePaths,
     systemPromptController,
     conversationHistoryController,
+    tokenController,
   }: NLControllerDependencies) {
     // NLController responsible for appending filepaths to SPC
     this.systemPromptController = systemPromptController;
     this.systemPromptController.addFilePaths(filePaths);
     this.conversationHistoryController = conversationHistoryController;
-    this.tokenController = new TokenController({
-      systemPromptController,
-      conversationHistoryController,
-    });
+    this.tokenController = tokenController;
   }
 
   public async handleNL(nl: string): Promise<void> {
