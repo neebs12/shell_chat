@@ -26,7 +26,7 @@
     "langchain": "^0.0.95",
     "marked": "^5.1.0",
     "openai": "^3.3.0",
-    "ora": "^6.3.1",
+    "ora": "^5.4.1",
     "readline-sync": "^1.4.10"
   },
   "devDependencies": {

@@ -74,7 +74,9 @@ export class ApplicationController {
           if (input === this.multilineController.delimiter) {
             input = this.multilineController.returnBufferAndReset();
           }
-          await this.nlController.handleNL(input);
+          await this.nlController.handleNL(input, () => {
+            rl.prompt();
+          });
         }
         rl.setPrompt(this.defaultPrompt());
         return rl.prompt();
