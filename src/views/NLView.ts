@@ -4,6 +4,7 @@ import { mdLineStr } from "../utils/marked-utils";
 import { processCenterMessage } from "../utils/art";
 import { Art } from "../utils/art";
 import ora, { Ora } from "ora";
+import * as readline from "readline";
 
 // token-specific rendering
 export class NLView {
