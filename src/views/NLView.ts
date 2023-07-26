@@ -3,6 +3,7 @@ import { chalkRender, type color } from "../utils/chalk-util";
 import { mdLineStr } from "../utils/marked-utils";
 import { processCenterMessage } from "../utils/art";
 import { Art } from "../utils/art";
+import { Spinner } from "../utils/spinner";
 
 // token-specific rendering
 export class NLView {
@@ -41,6 +42,7 @@ export class NLView {
 
 // markdown-specific rendering
 export class NLMDView {
+  private spinner: Spinner = new Spinner();
   private genericStyle = chalk.gray;
   private highlightStyle = chalk.gray.bold;
   private av = new Art(this.genericStyle, this.highlightStyle);
@@ -54,6 +56,7 @@ export class NLMDView {
       styler: chalk.dim.gray,
     });
     process.stdout.write(chalk.italic(str + "\n"));
+    this.spinner.start();
   }
 
   public handleStreamCB(token: string) {
@@ -85,12 +88,24 @@ export class NLMDView {
         // render as normally with normal conditionals
         if (this.isCodeBlock || canFlipState) {
           // render as codeblock
+          // ora <--- clear & stop
+          this.spinner.stop();
           this.renderLineNLMDAsCodeBlock(bufferStr);
+          // ora <--- start
+          this.spinner.start();
         } else if (bufferStr === "") {
+          // ora <--- clear & stop
+          this.spinner.stop();
           this.nlView.renderNewLine();
+          // ora <--- start
+          this.spinner.start();
         } else {
           // render normally (if it contains valu)
+          // ora <--- clear & stop
+          this.spinner.stop();
           this.renderLineNLMD(bufferStr);
+          // ora <--- start
+          this.spinner.start();
         }
         // reset buffer
         this.buffer = [];
@@ -101,8 +116,12 @@ export class NLMDView {
   public handleEndCB(tokensUsed: number) {
     const bufferStr = this.buffer.join("");
     if (this.isCodeBlock || bufferStr === "```") {
+      // ora <--- clear & stop
+      this.spinner.stop();
       this.renderLineNLMDAsCodeBlock(bufferStr);
     } else {
+      // ora <--- clear & stop
+      this.spinner.stop();
       this.renderLineNLMD(bufferStr);
     }
     this.buffer = [];
@@ -121,6 +140,9 @@ export class NLMDView {
     );
     // const str = this.av.createMessage(`${tokensUsed.toString()} tokens`);
     process.stdout.write(str + "\n");
+    // NEED TO RESTART RL with a potential CB
+    // CB will likely be () => { rl.prompt() }
+    //   so that event loop is not empty and NOT exited
   }
 
   public renderLineNLMDAsCodeBlock(input: string) {

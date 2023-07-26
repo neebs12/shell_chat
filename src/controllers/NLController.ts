@@ -46,7 +46,7 @@ export class NLController {
     this.tokenController = tokenController;
   }
 
-  public async handleNL(nl: string): Promise<void> {
+  public async handleNL(nl: string, rlCallback: () => void): Promise<void> {
     if (
       (await this.tokenController.areTheAddedFilesTooLarge()) ||
       (await this.tokenController.isNLInputTooLarge(nl))
@@ -57,6 +57,7 @@ export class NLController {
 
     // append the nl
     this.conversationHistoryController.appendUserMessage(nl);
+
     const chatMessages = await this.getChatMessages();
     // const { startCB, streamCB, endCB } = await this.getStreamCBs();
     const { startCB, streamCB, endCB } = await this.getStreamMDCBs();
@@ -83,6 +84,7 @@ export class NLController {
     const aiReponse = await chat.call(chatMessages);
     // console.log(`\n===\nai reponse: ${aiReponse.text}\n===\n`);
     this.conversationHistoryController.appendAIMessage(aiReponse.text);
+    rlCallback();
   }
 
   // private
@@ -130,6 +132,7 @@ export class NLController {
     };
 
     const endCB = async () => {
+      // delayedNum doesnt have the latest ai message yet
       const delayedNum = await this.tokenController.getTokensUsedBySPCH();
       const actualNum = delayedNum + debugBuffer.length;
       this.nlmdView.handleEndCB(actualNum);

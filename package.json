@@ -19,6 +19,7 @@
     "@types/marked": "^5.0.0",
     "ansi-regex": "^5.0.1",
     "chalk": "^4.1.2",
+    "cli-spinners": "^2.9.0",
     "commander": "^10.0.1",
     "dotenv": "^16.1.4",
     "glob": "^10.3.1",
@@ -26,7 +27,7 @@
     "langchain": "^0.0.95",
     "marked": "^5.1.0",
     "openai": "^3.3.0",
-    "ora": "^6.3.1",
+    "ora": "^5.4.1",
     "readline-sync": "^1.4.10"
   },
   "devDependencies": {
