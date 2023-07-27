@@ -1,6 +1,6 @@
 {
   "name": "shell_chat",
-  "version": "0.0.8",
+  "version": "0.0.11",
   "description": "Terminal Chat GPT",
   "main": "./build/index.js",
   "bin": {
@@ -27,7 +27,6 @@
     "langchain": "^0.0.95",
     "marked": "^5.1.0",
     "openai": "^3.3.0",
-    "ora": "^5.4.1",
     "readline-sync": "^1.4.10"
   },
   "devDependencies": {

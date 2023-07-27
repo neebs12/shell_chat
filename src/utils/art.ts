@@ -8,7 +8,7 @@ export const processCenterMessage = (
 ): string => {
   let msg = componentsArray.map((component) => component.content).join("");
   const consoleWidth = process.stdout.columns || fallbackConsoleWidth;
-  let paddingLen = Math.floor((consoleWidth - msg.length) / 2);
+  let paddingLen = Math.floor((consoleWidth - msg.length + 2) / 2);
 
   const paddingString = Array(paddingLen).join(paddingChar.content);
   const styledMsg = componentsArray
@@ -43,7 +43,9 @@ export const processLeftMessage = (
   // Use the string repeat method here
   const leftPaddingString = paddingChar.content.repeat(leftPaddingLen);
   // slight allowance on right padding
-  const rightPaddingString = paddingChar.content.repeat(rightPaddingLen - 1);
+  const rightPaddingString = paddingChar.content.repeat(
+    Math.max(rightPaddingLen - 1, 0)
+  );
 
   const styledMsg = componentsArray
     .map((component) => component.styler(component.content))

@@ -11,7 +11,6 @@ import { SystemPromptController } from "./SystemPromptController";
 import { ConversationHistoryController } from "./ConversationHistoryController";
 import { TokenController } from "./TokenController";
 import { NLView, NLMDView } from "../views/NLView";
-import chalk from "chalk";
 
 type NLControllerDependencies = {
   filePaths: string[];

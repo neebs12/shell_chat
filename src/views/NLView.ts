@@ -49,17 +49,20 @@ export class NLMDView {
   public nlView = new NLView();
   public isCodeBlock: boolean = false;
   public buffer: string[] = [];
+  public isFirstRender: boolean = true;
 
   public handleStartCB() {
-    const str = processCenterMessage([], {
-      content: "#",
-      styler: chalk.dim.gray,
-    });
-    process.stdout.write(chalk.italic(str + "\n"));
+    // const str = processCenterMessage([], {
+    //   content: "#",
+    //   styler: chalk.dim.gray,
+    // });
+    // process.stdout.write(chalk.italic(str + "\n"));
+    // process.stdout.write("\n");
     this.spinner.start();
   }
 
   public handleStreamCB(token: string) {
+    this.spinner.incrementTokenCounter();
     const subTokenArry = token.split("\n");
 
     for (let ind = 0; ind < subTokenArry.length; ind += 1) {
@@ -86,6 +89,13 @@ export class NLMDView {
         const bufferStr = this.buffer.join("");
         // now either at start or middle of the overarching token
         // render as normally with normal conditionals
+        if (this.isFirstRender) {
+          this.isFirstRender = false;
+          this.spinner.stop();
+          process.stdout.write("\n");
+          this.spinner.start();
+        }
+
         if (this.isCodeBlock || canFlipState) {
           // render as codeblock
           // ora <--- clear & stop
@@ -118,10 +128,12 @@ export class NLMDView {
     if (this.isCodeBlock || bufferStr === "```") {
       // ora <--- clear & stop
       this.spinner.stop();
+      this.spinner.resetTokenCounter();
       this.renderLineNLMDAsCodeBlock(bufferStr);
     } else {
       // ora <--- clear & stop
       this.spinner.stop();
+      this.spinner.resetTokenCounter();
       this.renderLineNLMD(bufferStr);
     }
     this.buffer = [];
@@ -138,11 +150,8 @@ export class NLMDView {
         { content: "#", styler: chalk.dim.gray }
       )
     );
-    // const str = this.av.createMessage(`${tokensUsed.toString()} tokens`);
     process.stdout.write(str + "\n");
-    // NEED TO RESTART RL with a potential CB
-    // CB will likely be () => { rl.prompt() }
-    //   so that event loop is not empty and NOT exited
+    this.isFirstRender = true;
   }
 
   public renderLineNLMDAsCodeBlock(input: string) {
