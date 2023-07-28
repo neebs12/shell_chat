@@ -3,7 +3,7 @@ import cliSpinners from "cli-spinners";
 import { Art } from "./art";
 import chalk from "chalk";
 import { TokenConfig } from "../controllers/TokenControllerUtils/TokenConfig";
-const { frames, interval } = cliSpinners.noise;
+const { frames, interval } = cliSpinners.arc;
 const FRAME_REPEAT_FACTOR = 4;
 const actualFrames = frames.flatMap((frame) =>
   Array(FRAME_REPEAT_FACTOR).fill(frame)
