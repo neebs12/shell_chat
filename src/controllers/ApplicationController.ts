@@ -46,6 +46,7 @@ export class ApplicationController {
   }
 
   public run(): void {
+    console.clear();
     this.applicationView.genericRender(art7);
     const rl = readline.createInterface({
       input: process.stdin,
