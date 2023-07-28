@@ -62,7 +62,7 @@ export class NLMDView {
   }
 
   public handleStreamCB(token: string) {
-    this.spinner.incrementTokenCounter();
+    this.spinner.incrementTokenCounter(token);
     const subTokenArry = token.split("\n");
 
     for (let ind = 0; ind < subTokenArry.length; ind += 1) {
