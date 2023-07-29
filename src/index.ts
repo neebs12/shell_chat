@@ -85,7 +85,7 @@ async function writeSensibleDefaultsToEnv({
   const objContent = {
     OPENAI_API_KEY: apiKey,
     MODEL_NAME: "gpt-3.5-turbo-16k",
-    MAX_TOKENS: 16000,
+    MAX_TOKENS: 16384,
     MAX_COMPLETION_TOKENS: 500,
     RESERVED_INPUT_TOKENS: 250,
     RESERVED_CONVERSATION_TOKENS: 2000,

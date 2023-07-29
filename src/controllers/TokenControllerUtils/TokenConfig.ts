@@ -1,5 +1,5 @@
 export class TokenConfig {
-  maxTokens: number = Number(process.env.MAX_TOKENS) || 16000;
+  maxTokens: number = Number(process.env.MAX_TOKENS) || 16384;
   maxCompletionTokens: number =
     Number(process.env.MAX_COMPLETION_TOKENS) || 300;
   reservedConversationTokens: number =
