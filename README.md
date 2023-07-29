@@ -17,10 +17,10 @@ To run this, it requires the following:
 This project is primarily driven by the aim to integrate certain user-friendly features absent in comparable applications. Key features include:
 
 - **"Streaming" with Syntax Highlighting**: Output is somehwat "realtime" to the console while being able to retain syntax highlighting.
-- [**Multiline Mode**](#Multiline-Mode): Allows input of more than one line.
-- [**Chat Management**](#Chat-management): Save, load, and delete past conversations.
-- [**File Tracking during Chats**](#File-tracking-(Experimental)): Stuff files in to your promp in the midst of chat sessions.
-- [**Token Management**](#Token-management): Change the limit of tokens sent to open AI to limit bills.
+- [**Multiline Mode**](#multiline-mode): Allows input of more than one line.
+- [**Chat Management**](#chat-management): Save, load, and delete past conversations.
+- [**File Tracking during Chats**](#file-tracking-experimental): Stuff files in to your promp in the midst of chat sessions.
+- [**Token Management**](#token-management): Change the limit of tokens sent to open AI to limit bills.
 
 ## Multiline mode
 
