@@ -56,7 +56,7 @@ export class SystemPromptModel {
     if (this._filePaths.length === 0) {
       return `You are a expert coding AI. You will answer queries provided to you in a short and concise manner. Do not show any warnings or information regarding your capabilities.
 
-      For clarity to the user, ONLY ANSWER IN MARKDOWN FORMAT.`;
+For clarity to the user, ONLY ANSWER IN MARKDOWN FORMAT.`;
     }
 
     // for any harcoded prompts, put them here

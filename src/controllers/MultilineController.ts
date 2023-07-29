@@ -59,16 +59,22 @@ export class MultilineController {
     rl: readline.Interface,
     input: string
   ): Promise<void> {
-    if (input.slice(0, 2) === "<<" && !this.mode) {
+    // I want to see if the last char of input is " \"
+    // if (input.slice(0, 2) === "<<" && !this.mode) {
+    //   // Case: starting mode
+    //   const delimeter = input.split(" ")[0].slice(2);
+    //   const DEFAULT_DELIMETER = "eof";
+    //   delimeter.length === 0
+    //     ? this.initialize(input, DEFAULT_DELIMETER)
+    //     : this.initialize(input);
+    //   this._multilineView.renderStartHeredocMode(
+    //     delimeter || DEFAULT_DELIMETER
+    //   );
+    if (input.endsWith("\\") && !this.mode) {
       // Case: starting mode
-      const delimeter = input.split(" ")[0].slice(2);
       const DEFAULT_DELIMETER = "eof";
-      delimeter.length === 0
-        ? this.initialize(input, DEFAULT_DELIMETER)
-        : this.initialize(input);
-      this._multilineView.renderStartHeredocMode(
-        delimeter || DEFAULT_DELIMETER
-      );
+      this.initialize(input.slice(0, input.length - 1), DEFAULT_DELIMETER);
+      this._multilineView.renderStartHeredocMode(DEFAULT_DELIMETER);
     } else if (input === this.delimiter && this.mode) {
       // Case: ending mode
       this.setMode(false);
