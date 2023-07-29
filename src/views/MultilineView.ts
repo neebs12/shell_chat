@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { Art } from "../utils/art";
 export class MultilineView {
-  private genericStyle = chalk.cyan;
+  private genericStyle = chalk.cyan.italic;
   private highlightStyle = chalk.redBright.bold;
   private av = new Art(this.genericStyle, this.highlightStyle);
 

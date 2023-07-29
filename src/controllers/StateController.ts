@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import chalk from "chalk";
 import { StateView } from "../views/StateView";
 import { type Message } from "../types";
 

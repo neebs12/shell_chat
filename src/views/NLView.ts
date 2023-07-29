@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import { chalkRender, type color } from "../utils/chalk-util";
 import { mdLineStr } from "../utils/marked-utils";
 import { processCenterMessage } from "../utils/art";
 import { Art } from "../utils/art";
@@ -14,17 +13,6 @@ export class NLView {
   public renderNLError(input: string) {
     const str = this.av.createMessage(input);
     process.stdout.write(str + "\n");
-  }
-
-  public render(
-    input: string,
-    isToken: boolean = true,
-    colour: keyof typeof color = "lightGreen"
-  ) {
-    chalkRender(input, colour);
-    if (!isToken) {
-      process.stdout.write("\n");
-    }
   }
 
   public renderNewLine() {
