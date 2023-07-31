@@ -63,6 +63,8 @@ export class CommandController {
     "/tl",
     "/token-files", // token remaining + file breakdown only
     "/tf",
+    "/clear",
+    "/c",
     "/verbose",
     "/debug",
     "/cwd",
@@ -138,6 +140,9 @@ export class CommandController {
       await this.stateController.listSavedStates();
     } else if (incl("/token-limit", "/tl")) {
       await this.handleTokenLimit(cmdArry);
+    } else if (incl("/clear", "/c")) {
+      console.clear();
+      this.commandView.headerRender("Console has been **cleared** 🧹");
     } else if (incl("/cwd", "/pwd")) {
       // NOTE: This is for debugging purposes only
       await this.commandView.render(
