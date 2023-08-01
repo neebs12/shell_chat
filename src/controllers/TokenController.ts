@@ -165,14 +165,19 @@ export class TokenController {
         `Input **${numValue}** is not a **positive** integer`
       );
     } else {
+      const previousValue = this.getConversationLimit();
       this.setConversationLimit(numValue);
-      if (this.getConversationLimit() === DEFAULT_LIMIT) {
+      if (previousValue === DEFAULT_LIMIT) {
         this.tokenView.headerRender(
           `Conversation token limit is set to **${numValue}** 👍`
         );
+      } else if (previousValue === numValue) {
+        this.tokenView.headerRender(
+          `Conversation token limit is already set to **${numValue}** 👍`
+        );
       } else {
         this.tokenView.headerRender(
-          `Conversation token limit is set from **${this.getConversationLimit()}** to **${numValue}** 👍`
+          `Conversation token limit is set from **${previousValue}** to **${numValue}** 👍`
         );
       }
     }
