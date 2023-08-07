@@ -58,7 +58,6 @@ export class NLController {
     this.conversationHistoryController.appendUserMessage(nl);
 
     const chatMessages = await this.getChatMessages();
-    // const { startCB, streamCB, endCB } = await this.getStreamCBs();
     const { startCB, streamCB, endCB } = await this.getStreamMDCBs();
     const callbackManager = CallbackManager.fromHandlers({
       async handleLLMStart(llm, _prompts: string[]) {
