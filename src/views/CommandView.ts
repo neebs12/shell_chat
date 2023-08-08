@@ -2,7 +2,7 @@ import chalk from "chalk";
 import { Art } from "../utils/art";
 
 export class CommandView {
-  public genericStyle = chalk.blue;
+  public genericStyle = chalk.blue.bold;
   public highlightStyle = chalk.redBright.bold;
   private av = new Art(this.genericStyle, this.highlightStyle);
 
