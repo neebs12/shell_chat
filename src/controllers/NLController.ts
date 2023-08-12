@@ -30,6 +30,7 @@ export class NLController {
   private conversationHistoryController: ConversationHistoryController;
   private tokenController: TokenController;
   private nlView: NLView = new NLView();
+  // private nlmdView: NLMDView | null = null;
   private nlmdView: NLMDView = new NLMDView();
 
   constructor({
@@ -43,6 +44,13 @@ export class NLController {
     this.systemPromptController.addFilePaths(filePaths);
     this.conversationHistoryController = conversationHistoryController;
     this.tokenController = tokenController;
+  }
+
+  public resetNL() {
+    // if (this.nlmdView !== null) {
+    this.nlmdView.cancel();
+    // this.nlmdView = new NLMDView();
+    // }
   }
 
   public async handleNL(nl: string, rlCallback: () => void): Promise<void> {
@@ -116,26 +124,34 @@ export class NLController {
 
   // can you give me multiple examples about typescript
   private async getStreamMDCBs(): Promise<StreamCallbacks> {
+    this.nlmdView = new NLMDView();
     this.nlmdView.buffer = [];
     this.nlmdView.isCodeBlock = false;
 
     let debugBuffer: string[] = [];
 
     const startCB = async () => {
+      // if (this.nlmdView !== null) {
+      // throw new Error("nlmdView is null");
       this.nlmdView.handleStartCB();
+      // }
     };
     const streamCB = async (token: string) => {
+      // if (this.nlmdView !== null) {
       debugBuffer.push(token);
       this.nlmdView.handleStreamCB(token);
+      // }
     };
 
     const endCB = async () => {
+      // if (this.nlmdView !== null) {
       // delayedNum doesnt have the latest ai message yet
       const delayedNum = await this.tokenController.getTokensUsedBySPCH();
       const actualNum = delayedNum + debugBuffer.length;
       this.nlmdView.handleEndCB(actualNum);
       // console.log("--------------"); // check MD output
       // this.nlView.render(debugBuffer.join("|"));
+      // }
     };
 
     return { startCB, streamCB, endCB };

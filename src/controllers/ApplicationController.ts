@@ -68,6 +68,7 @@ export class ApplicationController {
 
         input = processInput(input);
         if (input === "") {
+          this.nlController.resetNL();
           return rl.prompt();
         } else if (input[0] === "/") {
           await this.commandController.handleCommand(input);

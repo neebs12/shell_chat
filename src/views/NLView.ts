@@ -39,6 +39,14 @@ export class NLMDView {
   public buffer: string[] = [];
   public isFirstRender: boolean = true;
 
+  private canRender: boolean = false;
+
+  public cancel() {
+    this.spinner.stop();
+    this.spinner.resetTokenCounter();
+    this.canRender = false;
+  }
+
   public handleStartCB() {
     // const str = processCenterMessage([], {
     //   content: "#",
@@ -46,10 +54,15 @@ export class NLMDView {
     // });
     // process.stdout.write(chalk.italic(str + "\n"));
     // process.stdout.write("\n");
+    this.canRender = true;
     this.spinner.start();
   }
 
   public handleStreamCB(token: string) {
+    if (this.canRender === false) {
+      return;
+    }
+
     this.spinner.incrementTokenCounter(token);
     const subTokenArry = token.split("\n");
 
@@ -112,6 +125,10 @@ export class NLMDView {
   }
 
   public handleEndCB(tokensUsed: number) {
+    if (this.canRender === false) {
+      return;
+    }
+
     const bufferStr = this.buffer.join("");
     if (this.isCodeBlock || bufferStr === "```") {
       // ora <--- clear & stop
