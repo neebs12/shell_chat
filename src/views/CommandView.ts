@@ -3,6 +3,7 @@ import { Art } from "../utils/art";
 
 export class CommandView {
   public genericStyle = chalk.blue;
+  // public genericStyle = chalk.hex("#5fb3ff")
   public highlightStyle = chalk.redBright.bold;
   private av = new Art(this.genericStyle, this.highlightStyle);
 
