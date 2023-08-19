@@ -1,3 +1,6 @@
+import OpenAI from "openai";
+import { PromiseType } from "utility-types";
+
 import {
   SystemChatMessage,
   AIChatMessage,
@@ -32,6 +35,10 @@ export class NLController {
   private nlView: NLView = new NLView();
   private nlmdView: NLMDView = new NLMDView();
 
+  private startCB: (() => Promise<void>) | null = null;
+  private streamCB: ((token: string) => Promise<void>) | null = null;
+  private endCB: (() => Promise<void>) | null = null;
+
   constructor({
     filePaths,
     systemPromptController,
@@ -43,6 +50,10 @@ export class NLController {
     this.systemPromptController.addFilePaths(filePaths);
     this.conversationHistoryController = conversationHistoryController;
     this.tokenController = tokenController;
+  }
+
+  public async stopNL(): Promise<void> {
+    throw new Error("stopNL not implemented in old NLController");
   }
 
   public async handleNL(nl: string, rlCallback: () => void): Promise<void> {
@@ -59,16 +70,30 @@ export class NLController {
 
     const chatMessages = await this.getChatMessages();
     // const { startCB, streamCB, endCB } = await this.getStreamCBs();
-    const { startCB, streamCB, endCB } = await this.getStreamMDCBs();
+    await this.getStreamMDCBs();
     const callbackManager = CallbackManager.fromHandlers({
-      async handleLLMStart(llm, _prompts: string[]) {
-        await startCB();
+      handleLLMStart: async (llm, _prompts: string[]) => {
+        if (this.startCB) {
+          await this.startCB();
+        } else {
+          throw new Error("startCB is null");
+        }
       },
-      async handleLLMEnd(output) {
-        await endCB();
+
+      handleLLMEnd: async (output) => {
+        if (this.endCB) {
+          await this.endCB();
+        } else {
+          throw new Error("endCB is null");
+        }
       },
-      async handleLLMNewToken(token) {
-        await streamCB(token);
+
+      handleLLMNewToken: async (token) => {
+        if (this.streamCB) {
+          await this.streamCB(token);
+        } else {
+          throw new Error("streamCB is null");
+        }
       },
     });
 
@@ -139,6 +164,179 @@ export class NLController {
       // this.nlView.render(debugBuffer.join("|"));
     };
 
-    return { startCB, streamCB, endCB };
+    this.startCB = startCB;
+    this.streamCB = streamCB;
+    this.endCB = endCB;
+    return { startCB, streamCB, endCB }; // not needed
+  }
+}
+
+type Role = "system" | "user" | "assistant";
+
+export class OpenAIInterface {
+  private openai = new OpenAI();
+
+  private systemPromptController: SystemPromptController;
+  private conversationHistoryController: ConversationHistoryController;
+  private tokenController: TokenController;
+  private nlView: NLView = new NLView();
+  private nlmdView: NLMDView = new NLMDView();
+
+  private startCB: (() => Promise<void>) | null = null;
+  private streamCB: ((token: string) => Promise<void>) | null = null;
+  private endCB: (() => Promise<void>) | null = null;
+
+  // private openAIStream: Stream<OpenAI.Chat.Completions.ChatCompletionChunk>;
+  // dafuq lmao
+  private openAIStream: PromiseType<
+    ReturnType<OpenAI.Chat.Completions["create"]>
+  > | null = null;
+
+  private static SYSTEM_ROLE: Role = "system";
+  private static USER_ROLE: Role = "user";
+  private static ASSISTANT_ROLE: Role = "assistant";
+
+  constructor({
+    filePaths,
+    systemPromptController,
+    conversationHistoryController,
+    tokenController,
+  }: NLControllerDependencies) {
+    // NLController responsible for appending filepaths to SPC
+    this.systemPromptController = systemPromptController;
+    this.systemPromptController.addFilePaths(filePaths);
+    this.conversationHistoryController = conversationHistoryController;
+    this.tokenController = tokenController;
+  }
+
+  public async stopNL(): Promise<void> {
+    throw new Error("stopNL not implemented in new NLController");
+  }
+
+  public async handleNL(nl: string, rlCallback: () => void): Promise<void> {
+    if (
+      (await this.tokenController.areTheAddedFilesTooLarge()) ||
+      (await this.tokenController.isNLInputTooLarge(nl))
+    ) {
+      this.nlView.renderNLError("Natural Language input is ignored");
+      return;
+    }
+
+    // initialize the cbs
+    await this.getStreamMDCBs();
+
+    // append the nl
+    this.conversationHistoryController.appendUserMessage(nl);
+
+    const chatMessages = await this.getChatMessages();
+
+    if (this.startCB && this.streamCB && this.endCB) {
+      const aiResponse = await this.customInterface({
+        startCB: this.startCB,
+        streamCB: this.streamCB,
+        endCB: this.endCB,
+        chatMessages,
+      });
+
+      this.conversationHistoryController.appendAIMessage(aiResponse);
+      rlCallback();
+    } else {
+      throw new Error(
+        "one of the callbacks (startCB, streamCB, endCB) is null"
+      );
+    }
+  }
+
+  // private
+  // custom interface, which takes in the callbacks and the conversation history
+  private async customInterface({
+    startCB,
+    streamCB,
+    endCB,
+    chatMessages,
+  }: StreamCallbacks & {
+    chatMessages: OpenAI.Chat.Completions.ChatCompletionMessage[];
+  }): Promise<string> {
+    await startCB();
+
+    this.openAIStream = await this.openai.chat.completions.create({
+      model: process.env.MODEL_NAME ?? "gpt-3.5-turbo-16k",
+      temperature: 0.4,
+      max_tokens: Number(process.env.MAX_COMPLETION_TOKENS) ?? 100,
+      messages: chatMessages,
+      stream: true,
+    });
+
+    let collectedChunks: string[] = [];
+    for await (const part of this.openAIStream) {
+      const chunk = part.choices[0]?.delta?.content || "";
+      collectedChunks.push(chunk);
+      await streamCB(chunk);
+    }
+
+    await endCB();
+    return collectedChunks.join("");
+  }
+
+  // get chat messages, but the interface has changed to reflect more openai's interface
+  private async getChatMessages(): Promise<
+    OpenAI.Chat.Completions.ChatCompletionMessage[]
+  > {
+    const systemPromptString =
+      await this.systemPromptController.getSystemPrompt();
+
+    // truncation
+    const truncatedCH =
+      await this.tokenController.getTruncatedConversationhistory();
+
+    const convoMessageArray = truncatedCH.map((message, ind) => {
+      if (message.key === "ai") {
+        return {
+          role: OpenAIInterface.ASSISTANT_ROLE,
+          content: message.content,
+        };
+      } else {
+        const content =
+          message.content +
+          (ind === truncatedCH.length - 1
+            ? "\n\n<|BACKGROUND INSTRUCTION: respond in standard markdown with italics & bolds but don't insert italics/bolds within codeblocks|>"
+            : "");
+        return { role: OpenAIInterface.USER_ROLE, content };
+      }
+    });
+    const fullMessageArray = [
+      { role: OpenAIInterface.SYSTEM_ROLE, content: systemPromptString },
+      ...convoMessageArray,
+    ];
+
+    return fullMessageArray;
+  }
+
+  private async getStreamMDCBs(): Promise<void> {
+    this.nlmdView.buffer = [];
+    this.nlmdView.isCodeBlock = false;
+
+    let localBuffer: string[] = [];
+
+    const startCB = async () => {
+      this.nlmdView.handleStartCB();
+    };
+    const streamCB = async (token: string) => {
+      localBuffer.push(token);
+      this.nlmdView.handleStreamCB(token);
+    };
+
+    const endCB = async () => {
+      // delayedNum doesnt have the latest ai message yet
+      const delayedNum = await this.tokenController.getTokensUsedBySPCH();
+      const actualNum = delayedNum + localBuffer.length;
+      this.nlmdView.handleEndCB(actualNum);
+      // console.log("--------------"); // check MD output
+      // this.nlView.render(localBuffer.join("|"));
+    };
+
+    this.startCB = startCB;
+    this.streamCB = streamCB;
+    this.endCB = endCB;
   }
 }
