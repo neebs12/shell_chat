@@ -65,6 +65,9 @@ export class ApplicationController {
     rl.prompt();
 
     rl.on("line", async (input: string): Promise<void> => {
+      // stops any streaming at all
+      this.nlController.stopNL();
+
       try {
         await this.multilineController.handleMultilineInput(rl, input);
 

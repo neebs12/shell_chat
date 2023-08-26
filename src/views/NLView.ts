@@ -31,8 +31,8 @@ export class NLView {
 // markdown-specific rendering
 export class NLMDView {
   private spinner: Spinner = new Spinner();
-  private genericStyle = chalk.gray;
-  private highlightStyle = chalk.gray.bold;
+  private genericStyle = chalk.blue;
+  private highlightStyle = chalk.red.bold;
   private av = new Art(this.genericStyle, this.highlightStyle);
   public nlView = new NLView();
   public isCodeBlock: boolean = false;
@@ -111,7 +111,7 @@ export class NLMDView {
     }
   }
 
-  public handleEndCB(tokensUsed: number) {
+  public handleEndCB(tokensUsed: number, interrupted: boolean) {
     const bufferStr = this.buffer.join("");
     if (this.isCodeBlock || bufferStr === "```") {
       // ora <--- clear & stop
@@ -127,18 +127,25 @@ export class NLMDView {
     this.buffer = [];
     this.isCodeBlock = false;
     // better than av.createMessage
-    const str = chalk.italic(
-      processCenterMessage(
-        [
-          { content: "##", styler: chalk.bold.gray },
-          { content: ` ${tokensUsed.toString()}`, styler: chalk.gray.bold },
-          { content: " tokens ", styler: chalk.gray.bold },
-          { content: "##", styler: chalk.bold.gray },
-        ],
-        { content: "#", styler: chalk.dim.gray }
-      )
-    );
-    process.stdout.write(str + "\n");
+    if (!interrupted) {
+      const str = chalk.italic(
+        processCenterMessage(
+          [
+            { content: "##", styler: chalk.bold.gray },
+            { content: ` ${tokensUsed.toString()}`, styler: chalk.gray.bold },
+            { content: " tokens ", styler: chalk.gray.bold },
+            { content: "##", styler: chalk.bold.gray },
+          ],
+          { content: "#", styler: chalk.dim.gray }
+        )
+      );
+      process.stdout.write(str + "\n");
+    } else {
+      const str = this.av.createMessage("This message was **interrupted**");
+      process.stdout.write(str + "\n");
+    }
+
+    // other state
     this.isFirstRender = true;
   }
 

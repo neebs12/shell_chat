@@ -159,7 +159,7 @@ export class NLController {
       // delayedNum doesnt have the latest ai message yet
       const delayedNum = await this.tokenController.getTokensUsedBySPCH();
       const actualNum = delayedNum + debugBuffer.length;
-      this.nlmdView.handleEndCB(actualNum);
+      this.nlmdView.handleEndCB(actualNum, false);
       // console.log("--------------"); // check MD output
       // this.nlView.render(debugBuffer.join("|"));
     };
@@ -174,6 +174,8 @@ export class NLController {
 type Role = "system" | "user" | "assistant";
 
 export class OpenAIInterface {
+  public isStreaming: boolean = false;
+
   private openai = new OpenAI();
 
   private systemPromptController: SystemPromptController;
@@ -209,8 +211,13 @@ export class OpenAIInterface {
     this.tokenController = tokenController;
   }
 
-  public async stopNL(): Promise<void> {
-    throw new Error("stopNL not implemented in new NLController");
+  public stopNL(): void {
+    // throw new Error("stopNL not implemented in new NLController");
+    if (this.openAIStream) {
+      // @ts-ignore
+      this.openAIStream.controller.abort();
+      this.openAIStream = null;
+    }
   }
 
   public async handleNL(nl: string, rlCallback: () => void): Promise<void> {
@@ -330,7 +337,7 @@ export class OpenAIInterface {
       // delayedNum doesnt have the latest ai message yet
       const delayedNum = await this.tokenController.getTokensUsedBySPCH();
       const actualNum = delayedNum + localBuffer.length;
-      this.nlmdView.handleEndCB(actualNum);
+      this.nlmdView.handleEndCB(actualNum, this.openAIStream === null);
       // console.log("--------------"); // check MD output
       // this.nlView.render(localBuffer.join("|"));
     };
