@@ -26,8 +26,9 @@
     "js-tiktoken": "^1.0.7",
     "langchain": "^0.0.95",
     "marked": "^5.1.0",
-    "openai": "^3.3.0",
-    "readline-sync": "^1.4.10"
+    "openai": "^4.0.1",
+    "readline-sync": "^1.4.10",
+    "utility-types": "^3.10.0"
   },
   "devDependencies": {
     "@types/chalk": "^2.2.0",

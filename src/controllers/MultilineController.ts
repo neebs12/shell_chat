@@ -57,9 +57,12 @@ export class MultilineController {
     rl: readline.Interface,
     input: string
   ): Promise<void> {
-    if (input.endsWith("\\") && !this.mode) {
+    // const pattern = "\\";
+    const pattern = "<<";
+    if (input.endsWith(pattern) && !this.mode) {
       // Case: starting mode
-      const DEFAULT_DELIMETER = "eof";
+      // const DEFAULT_DELIMETER = "eof";
+      const DEFAULT_DELIMETER = "<<";
       this.initialize(input.slice(0, input.length - 1), DEFAULT_DELIMETER);
       this._multilineView.renderStartHeredocMode(DEFAULT_DELIMETER);
     } else if (input === this.delimiter && this.mode) {

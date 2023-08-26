@@ -4,6 +4,7 @@ import { CommandController } from "./CommandController";
 import { SystemPromptController } from "./SystemPromptController";
 import { ConversationHistoryController } from "./ConversationHistoryController";
 import { NLController } from "./NLController";
+import { OpenAIInterface } from "./NLController";
 import { ApplicationView } from "../views/ApplicationView";
 import { MultilineController } from "./MultilineController";
 import { StateController } from "./StateController";
@@ -16,7 +17,7 @@ export class ApplicationController {
   private multilineController: MultilineController;
   private conversationHistoryController: ConversationHistoryController;
   private systemPromptController: SystemPromptController;
-  private nlController: NLController;
+  private nlController: OpenAIInterface; // NLController;
   private commandController: CommandController;
   private tokenController: TokenController;
 
@@ -31,7 +32,13 @@ export class ApplicationController {
       systemPromptController: this.systemPromptController,
       conversationHistoryController: this.conversationHistoryController,
     });
-    this.nlController = new NLController({
+    // this.nlController = new NLController({
+    //   filePaths: this.filePaths,
+    //   conversationHistoryController: this.conversationHistoryController,
+    //   systemPromptController: this.systemPromptController,
+    //   tokenController: this.tokenController,
+    // });
+    this.nlController = new OpenAIInterface({
       filePaths: this.filePaths,
       conversationHistoryController: this.conversationHistoryController,
       systemPromptController: this.systemPromptController,
@@ -58,6 +65,9 @@ export class ApplicationController {
     rl.prompt();
 
     rl.on("line", async (input: string): Promise<void> => {
+      // stops any streaming at all
+      this.nlController.stopNL();
+
       try {
         await this.multilineController.handleMultilineInput(rl, input);
 

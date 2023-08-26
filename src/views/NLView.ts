@@ -31,8 +31,8 @@ export class NLView {
 // markdown-specific rendering
 export class NLMDView {
   private spinner: Spinner = new Spinner();
-  private genericStyle = chalk.gray;
-  private highlightStyle = chalk.gray.bold;
+  private genericStyle = chalk.blue;
+  private highlightStyle = chalk.red.bold;
   private av = new Art(this.genericStyle, this.highlightStyle);
   public nlView = new NLView();
   public isCodeBlock: boolean = false;
@@ -111,7 +111,19 @@ export class NLMDView {
     }
   }
 
-  public handleEndCB(tokensUsed: number) {
+  public handleEndCB(tokensUsed: number, interrupted: boolean) {
+    // other state
+    this.isFirstRender = true;
+
+    if (interrupted) {
+      process.stdout.clearLine(0);
+      this.spinner.stop();
+      this.spinner.resetTokenCounter();
+      const str = this.av.createMessage("This message was **interrupted**");
+      process.stdout.write(str + "\n");
+      return;
+    }
+
     const bufferStr = this.buffer.join("");
     if (this.isCodeBlock || bufferStr === "```") {
       // ora <--- clear & stop
@@ -139,7 +151,6 @@ export class NLMDView {
       )
     );
     process.stdout.write(str + "\n");
-    this.isFirstRender = true;
   }
 
   public renderLineNLMDAsCodeBlock(input: string) {
