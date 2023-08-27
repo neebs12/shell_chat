@@ -264,25 +264,32 @@ export class OpenAIInterface {
   }: StreamCallbacks & {
     chatMessages: OpenAI.Chat.Completions.ChatCompletionMessage[];
   }): Promise<string> {
-    await startCB();
+    try {
+      await startCB();
 
-    this.openAIStream = await this.openai.chat.completions.create({
-      model: process.env.MODEL_NAME ?? "gpt-3.5-turbo-16k",
-      temperature: 0.4,
-      max_tokens: Number(process.env.MAX_COMPLETION_TOKENS) ?? 100,
-      messages: chatMessages,
-      stream: true,
-    });
+      this.openAIStream = await this.openai.chat.completions.create({
+        model: process.env.MODEL_NAME ?? "gpt-3.5-turbo-16k",
+        temperature: 0.4,
+        max_tokens: Number(process.env.MAX_COMPLETION_TOKENS) ?? 100,
+        messages: chatMessages,
+        stream: true,
+      });
 
-    let collectedChunks: string[] = [];
-    for await (const part of this.openAIStream) {
-      const chunk = part.choices[0]?.delta?.content || "";
-      collectedChunks.push(chunk);
-      await streamCB(chunk);
+      let collectedChunks: string[] = [];
+      for await (const part of this.openAIStream) {
+        const chunk = part.choices[0]?.delta?.content || "";
+        collectedChunks.push(chunk);
+        await streamCB(chunk);
+      }
+
+      await endCB();
+      return collectedChunks.join("");
+    } catch (e) {
+      // some error
+      this.stopNL();
+      await endCB();
+      return "";
     }
-
-    await endCB();
-    return collectedChunks.join("");
   }
 
   // get chat messages, but the interface has changed to reflect more openai's interface
